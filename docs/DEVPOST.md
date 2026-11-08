@@ -1,4 +1,4 @@
-# Devpost submission: Mandate
+# Devpost submission: Writ
 
 > Paste each section into the matching Devpost field. Keep the headings, since judges skim them.
 
@@ -18,14 +18,14 @@ PayPal and Google's AP2 work describes signed *mandates* as the answer. We wante
 You write a rule in plain English, for example: *"Onboarding kit for the design team: monitors, headphones, lamps. $1,500 total, ask me before anything over $200, nothing from Amazon."*
 
 1. **The policy.** An LLM compiles it into numbered clauses on a signed instrument. Deterministic code then cross-checks the result against your literal words, restoring any cap, approval line or exclusion the model dropped.
-2. **The signatures.** You sign with a **passkey**, whose WebAuthn challenge is the sha256 of the mandate. You then approve a **PayPal authorization hold** for the budget. Mandate seals an **AP2-shaped IntentMandate** (Ed25519) bound to that authorization ID.
+2. **The signatures.** You sign with a **passkey**, whose WebAuthn challenge is the sha256 of the mandate. You then approve a **PayPal authorization hold** for the budget. Writ seals an **AP2-shaped IntentMandate** (Ed25519) bound to that authorization ID.
 3. **The agents.** A single agent, a team of agents, or *any* external agent over **MCP** shops real catalogs (Channel3). An orchestrator can delegate **sub-mandates**, which are always *narrower* than their parent on every rule (capability attenuation). An over-reaching delegation is refused with the reason.
 4. **The verdict.** Every proposed purchase is checked by a **13-rule deterministic engine at every level of the delegation chain**:
    - **ALLOW:** partial capture from the hold, plus a signed merchant verification receipt and tracking via the PayPal Agent Toolkit.
    - **ESCALATE:** an approval slip goes to the human. If they decline with a reason, the agent adapts.
    - **DENY:** nobody can override it, not the agent and not the human.
 5. **The kill switch** revokes any agent's subtree instantly. When the work is done, the **unspent hold is voided** and refunds run through the Agent Toolkit. PayPal **webhooks** (signature-verified) reconcile everything into an append-only **AG Grid ledger**.
-6. **The proof.** The **red-team suite** hands a deliberately compromised AI agent a real $100 sub-mandate from the live hold and orders it to steal: prompt-injected overspend, forged prices, quantity stuffing, blocked merchants, skipping approvals, delegating itself more money, escaping its token scope, and spending after revocation. Mandate asks **PayPal's own API** before and after. The scorecard reads, for example, *"16/16 blocked · $0.00 moved"*.
+6. **The proof.** The **red-team suite** hands a deliberately compromised AI agent a real $100 sub-mandate from the live hold and orders it to steal: prompt-injected overspend, forged prices, quantity stuffing, blocked merchants, skipping approvals, delegating itself more money, escaping its token scope, and spending after revocation. a sub-agent exceeding its own slice while the parent still has money. Writ then runs a **policy-specific Crash Test**, a boundary matrix generated from the mandate's own clauses (budget + $0.01, approval line + $0.01, one item too many, every blocked merchant and subdomain, rating − 0.1, deadline + 1 day, expiry, revocation, and every way a delegation could widen authority). It asks **PayPal's own API** before and after, and issues a signed **Assurance Certificate** bound to that exact mandate hash. Example: *"13/13 attacks blocked · 18/18 boundaries held · $0.00 moved — certificate PASSED"*.
 7. **Merchants** can verify any agent order at `/verify` and get a signed, offline-verifiable receipt.
 
 ## How we built it
@@ -73,12 +73,12 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
   - 3 partial captures with merchant receipts and tracking
   - $301.53 voided
   - every step confirmed by verified webhooks
-- **A compromised agent with a real budget couldn't move a cent,** and PayPal confirmed it.
+- **A compromised agent with a real budget couldn't move a cent,** and PayPal confirmed it. Every mandate can now carry a signed **Assurance Certificate**: crash-tested at every clause's edge, red-teamed, and PayPal-verified.
 
 ## What we learned
 **"AI for judgment, math for money."** The safest agent architecture isn't a smarter model. It's a boundary the model can't argue with, enforced by the payment system itself.
 
-## What's next for Mandate
+## What's next for Writ
 - The full **AP2** Cart and Payment mandate chain
 - **Dispute evidence packs** submitted via PayPal's Disputes API
 - **Phone approvals**

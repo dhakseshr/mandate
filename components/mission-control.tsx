@@ -167,7 +167,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
         />
       )}
 
-      {!m.parentId && !revoked && <CrashTest mandateId={mandate.id} />}
+      {!m.parentId && !revoked && !(suite.scorecard?.crashTest && !suite.running) && <CrashTest mandateId={mandate.id} />}
 
       {(tree.length > 0 || (team && !m.parentId)) && <DelegationTree view={view} onChange={onChange} />}
 

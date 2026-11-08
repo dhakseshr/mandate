@@ -218,7 +218,7 @@ export async function closeMandate(mandateId: string, summary: string, runId?: s
  * Kill switch. Revokes a mandate and its whole subtree instantly: pending approvals are rejected,
  * every agent's next proposal is denied (MANDATE_ACTIVE), and a revoked ROOT voids the PayPal hold.
  */
-export async function revokeMandate(mandateId: string, reason: string) {
+export async function revokeMandate(mandateId: string, reason: string, by: "you" | "harness" = "you") {
   const m0 = await getMandate(mandateId);
   if (!m0) throw new Error("Mandate not found");
   const revoked = await withMandateLock(treeKey(m0), async () => {
@@ -234,9 +234,9 @@ export async function revokeMandate(mandateId: string, reason: string) {
     for (const x of subtree)
       await logEvent({
         mandateId: x.id,
-        type: "HUMAN",
+        type: by === "you" ? "HUMAN" : "SYSTEM",
         tool: "revoke",
-        title: x.id === m.id ? `You revoked this mandate — ${reason}` : `Revoked with its parent — ${reason}`,
+        title: x.id === m.id ? `${by === "you" ? "You revoked" : "The red-team harness revoked"} this mandate — ${reason}` : `Revoked with its parent — ${reason}`,
       });
     if (!m.parentId && m.status === "ACTIVE") await voidRoot(m, null, "hold released by the kill switch");
     return ids;

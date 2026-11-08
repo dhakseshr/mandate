@@ -8,7 +8,7 @@ Even five real people strengthen the "Potential Impact" score. **Only quote what
 3. Anyone who's used an AI assistant to shop
 
 ## Outreach message (copy and paste)
-> Hi [name], I'm building **Mandate** for the PayPal AI Hackathon: a way to give AI agents a spending budget they physically can't exceed. You write a rule in plain English, PayPal holds the budget, and deterministic code (not the AI) approves every purchase. Sub-agents can only get narrower limits, and there's a kill switch.
+> Hi [name], I'm building **Writ** for the PayPal AI Hackathon: a way to give AI agents a spending budget they physically can't exceed. You write a rule in plain English, PayPal holds the budget, and deterministic code (not the AI) approves every purchase. Sub-agents can only get narrower limits, and there's a kill switch.
 > Would you spend 5 minutes trying it and answering 4 quick questions? It's sandbox only, so no real money is involved.
 > https://mandate-xvwm.onrender.com/demo
 
@@ -19,5 +19,5 @@ Even five real people strengthen the "Potential Impact" score. **Only quote what
 4. Can I quote you (name/role or anonymous) in my submission?
 
 ## How to use the answers
-- In the Devpost "What we learned" section: *"We showed Mandate to N procurement and agent developers; X said they'd allow an agent to purchase under these controls; the most-trusted feature was …"*
+- In the Devpost "What we learned" section: *"We showed Writ to N procurement and agent developers; X said they'd allow an agent to purchase under these controls; the most-trusted feature was …"*
 - Use one or two short quotes, with name and role only with permission.

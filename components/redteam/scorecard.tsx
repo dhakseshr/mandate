@@ -165,6 +165,11 @@ function CertificateLine({ c, rootId }: { c: Certificate; rootId: string }) {
     <div className="flex flex-col gap-2 border-t border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[13px]">
         <span className="label text-[10px] text-ink">Assurance certificate</span>
+        {c.result && (
+          <span className={cn("label rounded-[2px] border px-1.5 py-[3px] text-[10px]", c.result === "PASSED" ? "border-allow/60 text-allow" : "border-deny/60 text-deny")}>
+            {c.result}
+          </span>
+        )}
         {c.sha256 && (
           <span className="num text-muted">
             · signed <span className="text-ink">#{c.sha256.replace(/^0x/, "").slice(0, 8)}</span>
@@ -174,13 +179,13 @@ function CertificateLine({ c, rootId }: { c: Certificate; rootId: string }) {
       </p>
       <p className="flex gap-4 text-[13px]">
         {c.url && (
-          <a href={c.url} download className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+          <a href={`${c.url}${c.url.includes("?") ? "&" : "?"}download`} download className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
             Download
           </a>
         )}
-        <Link href={`/verify?mandate=${encodeURIComponent(rootId)}`} className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+        <a href={c.url ?? `/verify?mandate=${encodeURIComponent(rootId)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
           Verify
-        </Link>
+        </a>
       </p>
     </div>
   );

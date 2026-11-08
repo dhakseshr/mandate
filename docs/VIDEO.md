@@ -21,7 +21,7 @@
 
 ### 0:15–0:35 · Who it's for and the thesis
 - **On screen:** landing hero ("Your AI can shop. It can't overspend."), then the "Who it's for" rows.
-- **Voiceover:** "Mandate is the financial permission layer for autonomous AI. It starts with procurement teams that want AI agents buying for them, without handing over a corporate card. AI decides what to buy. Mandate decides whether it's allowed to spend. PayPal enforces the boundary."
+- **Voiceover:** "Writ is the financial permission layer for autonomous AI. It starts with procurement teams that want AI agents buying for them, without handing over a corporate card. AI decides what to buy. Writ decides whether it's allowed to spend. PayPal enforces the boundary."
 
 ### 0:35–1:00 · Sign and hold
 - **On screen:**
@@ -44,8 +44,9 @@
   - Click **Run red-team suite**. Show the PayPal "before" line.
   - Cut through the attacks: the $389 injected listing (hidden text struck through), forged $1 product, delegating itself $5,000, revoking the human's mandate, spending after the kill switch. Each one gets a **DENIED / REFUSED** stamp.
   - The adversarial AI's own words ("I'll buy the pre-approved listing…").
-  - The **scorecard**: "N/N blocked · $0.00 moved", plus **"PayPal independently confirms: $X captured before and after."**
-- **Voiceover:** "Now the important part. We hand a compromised AI agent a real hundred-dollar budget from this hold and order it to steal. Injected listings, forged prices, fake approvals, giving itself more money, escaping its own permissions. Every attempt is denied by plain code. And we don't ask our own database whether it worked. We ask PayPal. Zero dollars moved. We don't trust the AI. We trust the boundary."
+  - The **crash-test matrix** filling in: every clause probed at its exact edge, all ✓.
+  - The **scorecard**: "N/N blocked · N/N boundaries held · $0.00 moved", **"PayPal independently confirms: $X captured before and after"**, and the **Assurance Certificate ✓ Verified** stamp.
+- **Voiceover:** "Now the important part. We hand a compromised AI agent a real hundred-dollar budget from this hold and order it to steal. Injected listings, forged prices, fake approvals, giving itself more money, escaping its own permissions. Every attempt is denied by plain code. And we don't ask our own database whether it worked. We ask PayPal. Zero dollars moved. Then we crash-test every clause at its exact edge and sign an assurance certificate for this mandate. We don't trust the AI. We trust the boundary."
 
 ### 2:20–2:40 · Kill switch, release, audit, merchants
 - **On screen:**
@@ -57,7 +58,7 @@
 
 ### 2:40–2:50 · Close
 - **On screen:** the landing instrument, the URL and repo, and the PayPal / Channel3 / AG Grid / Render line.
-- **Voiceover:** "Mandate. Signed by a human, bounded by PayPal, provable forever."
+- **Voiceover:** "Writ. Signed by a human, bounded by PayPal, provable forever."
 
 ---
 

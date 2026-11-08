@@ -25,7 +25,7 @@ export type Snapshot = {
 };
 export type CrashCase = { id: string; clause: string; case: string; expected: string; verdict: string; rule?: string; held: boolean };
 export type CrashTest = { total: number; held: number; cases: CrashCase[] };
-export type Certificate = { id?: string; sha256?: string; url?: string };
+export type Certificate = { id?: string; sha256?: string; url?: string; result?: string };
 export type Scorecard = {
   crashTest?: CrashTest;
   certificate?: Certificate;
