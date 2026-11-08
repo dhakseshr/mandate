@@ -86,6 +86,7 @@ function normalise(p: C3Product): Product[] {
       url: offer.url,
       image: (p.images?.find((i) => i.is_main_image) ?? p.images?.[0])?.url ?? null,
       in_stock: !offer.availability || /instock|limited|preorder/i.test(offer.availability),
+      description: p.description ? p.description.slice(0, 280) : null,
     },
   ];
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, jsonb, numeric, integer, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, numeric, integer, timestamp, index, boolean } from "drizzle-orm/pg-core";
 import type { Policy, Product, Evaluation } from "@/lib/policy/schema";
 
 const id = () => text("id").primaryKey();
@@ -20,6 +20,17 @@ export const mandates = pgTable("mandates", {
   refundedTotal: money("refunded_total").notNull().default(0),
   itemsBought: integer("items_bought").notNull().default(0),
   summary: text("summary"),
+  /** Red-team demo: a poisoned listing is injected into search results. */
+  redTeam: boolean("red_team").notNull().default(false),
+  /** sha256 of the canonical signed mandate document (AP2-shaped IntentMandate + policy + PayPal hold). */
+  signatureHash: text("signature_hash"),
+  signature: text("signature"),
+  signingPublicKey: text("signing_public_key"),
+  signedAt: timestamp("signed_at", { withTimezone: true }),
+  /** "builtin" = Mandate's own agent shops; "external" = any agent connects over MCP with agentToken. */
+  agentMode: text("agent_mode").notNull().default("builtin"),
+  /** Bearer token scoping an external (MCP) agent to exactly this mandate. Issued at authorization. */
+  agentToken: text("agent_token").unique(),
   /** Products the agent has seen, keyed by id. Purchases must reference these — the model can't invent prices. */
   catalog: jsonb("catalog").$type<Record<string, Product>>().notNull().default({}),
   expiresAt: timestamp("expires_at", { withTimezone: true }),

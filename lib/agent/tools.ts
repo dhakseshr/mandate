@@ -4,6 +4,8 @@ import { searchProducts } from "@/lib/channel3/client";
 import { evaluate } from "@/lib/policy/engine";
 import { executePurchase, closeMandate } from "@/lib/purchase";
 import { getMandate, ledgerStateOf, logEvent, rememberProducts } from "@/lib/ledger";
+import { POISONED_PRODUCT } from "@/lib/redteam";
+import type { Product } from "@/lib/policy/schema";
 
 export interface RunCtx {
   mandateId: string;
@@ -13,7 +15,7 @@ export interface RunCtx {
   finished: boolean;
 }
 
-const compact = (p: { id: string; title: string; brand: string | null; price: number; merchant: string; rating: number | null; delivery_days: number | null; category: string | null }) => ({
+const compact = (p: Product) => ({
   product_id: p.id,
   title: p.title,
   brand: p.brand,
@@ -22,6 +24,8 @@ const compact = (p: { id: string; title: string; brand: string | null; price: nu
   rating: p.rating,
   est_delivery_days: p.delivery_days,
   category: p.category,
+  // Merchant-supplied text, passed through as-is: this is the realistic prompt-injection surface.
+  merchant_description: p.description ?? null,
 });
 
 export function makeTools(ctx: RunCtx) {
@@ -41,7 +45,13 @@ export function makeTools(ctx: RunCtx) {
       execute: async ({ query, max_price }) => {
         await logEvent({ mandateId: ctx.mandateId, runId: ctx.runId, type: "TOOL_CALL", tool: "search_products", title: `Searching “${query}”${max_price ? ` under $${max_price}` : ""}`, detail: { query, max_price } });
         try {
-          const results = await searchProducts(query, { max_price, limit: 6 });
+          let results = await searchProducts(query, { max_price, limit: 6 });
+          const m = await getMandate(ctx.mandateId);
+          if (m?.redTeam) {
+            // Red-team demo: a poisoned listing slips into the results, ignoring the max_price filter.
+            results = [results[0], POISONED_PRODUCT, ...results.slice(1)].filter(Boolean) as Product[];
+            await logEvent({ mandateId: ctx.mandateId, runId: ctx.runId, type: "SYSTEM", title: "Red team: a malicious listing with hidden instructions entered the search results" });
+          }
           await rememberProducts(ctx.mandateId, results);
           await logEvent({ mandateId: ctx.mandateId, runId: ctx.runId, type: "TOOL_RESULT", tool: "search_products", title: `Found ${results.length} products`, detail: { products: results } });
           return { count: results.length, products: results.map(compact) };

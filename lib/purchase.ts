@@ -7,6 +7,7 @@ import type { Product } from "@/lib/policy/schema";
 import { captureFromEnvelope, voidEnvelope } from "@/lib/paypal/envelope";
 import { PayPalError } from "@/lib/paypal/client";
 import { registerShipment } from "@/lib/tracking";
+import { isPoisoned } from "@/lib/redteam";
 import { getMandate, ledgerStateOf, logEvent, newId, withMandateLock } from "@/lib/ledger";
 
 export type PurchaseOutcome =
@@ -22,6 +23,8 @@ export async function executePurchase(p: {
   quantity: number;
   rationale: string;
   humanApproved?: boolean;
+  /** Red-team "hijacked agent" simulation (proposal injected directly, not chosen by the model). */
+  simulated?: boolean;
 }): Promise<PurchaseOutcome> {
   return withMandateLock(p.mandateId, async () => {
     const m = await getMandate(p.mandateId);
@@ -31,6 +34,9 @@ export async function executePurchase(p: {
 
     // A human may approve an ESCALATE. Nobody — not the agent, not the human — can override a DENY.
     const verdict = ev.verdict === "ESCALATE" && p.humanApproved ? "ALLOW" : ev.verdict;
+    const injection = isPoisoned(p.product)
+      ? { text: p.product.description ?? "", source: p.product.merchant, followedByAgent: !p.simulated }
+      : undefined;
     await logEvent({
       mandateId: p.mandateId,
       runId: p.runId,
@@ -47,7 +53,7 @@ export async function executePurchase(p: {
       rule: ev.rule,
       amount: ev.amount,
       merchant: p.product.merchant,
-      detail: { product: p.product, checks: ev.checks, rationale: p.rationale },
+      detail: { product: p.product, checks: ev.checks, rationale: p.rationale, ...(injection ? { injection } : {}) },
     });
 
     if (verdict === "DENY") return { status: "DENIED", rule: ev.rule, message: ev.message, remaining_budget: remaining };
@@ -74,6 +80,8 @@ export async function executePurchase(p: {
         authorizationId: m.authorizationId,
         amount: ev.amount,
         purchaseId,
+        // Mandate evidence on the PayPal record: which signed mandate authorised this capture.
+        invoiceId: m.signatureHash ? `M-${m.signatureHash.slice(0, 12)}-${purchaseId}` : undefined,
         note: `${p.product.title} (${p.product.merchant}) — bought by your Mandate agent`,
       });
       await db.insert(schema.purchases).values({
@@ -100,7 +108,7 @@ export async function executePurchase(p: {
         amount: ev.amount,
         merchant: p.product.merchant,
         paypalId: cap.captureId,
-        detail: { capture: cap, product: p.product.title },
+        detail: { capture: cap, product: p.product.title, api: `POST /v2/payments/authorizations/${m.authorizationId}/capture` },
       });
       // Off the critical path: don't hold the lock or the agent while PayPal registers tracking.
       void registerShipment({ mandateId: p.mandateId, runId: p.runId, purchaseId, orderId: m.paypalOrderId, captureId: cap.captureId });
@@ -136,6 +144,7 @@ export async function closeMandate(mandateId: string, summary: string, runId?: s
           title: `Voided remaining $${voided.toFixed(2)} — released back to you`,
           amount: voided,
           paypalId: m.authorizationId,
+          detail: { api: `POST /v2/payments/authorizations/${m.authorizationId}/void` },
         });
       } catch (err) {
         await logEvent({ mandateId, runId, type: "PAYPAL", title: `Void failed: ${String(err)}` });

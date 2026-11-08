@@ -61,10 +61,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Money and IDs: monospace, tabular, never reflowing. */
+.num { font-family: var(--font-geist-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* Permission-slip paper: faint ruled texture + perforated edge. */
+.slip {
+  background-image: repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in oklab, var(--border) 45%, transparent) 27px 28px);
+}
+.perforation {
+  background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 4px);
+  background-size: 14px 10px;
+  background-repeat: repeat-x;
+  height: 10px;
+}
+
+/* Diagonal stripes for "still held" money. */
+.stripes {
+  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--paypal) 28%, transparent) 0 6px, color-mix(in oklab, var(--paypal) 14%, transparent) 6px 12px);
 }
 
 @keyframes rise {
@@ -78,3 +99,37 @@ body {
   50% { opacity: 0.3; }
 }
 .animate-pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+
+@keyframes shake {
+  0%, 100% { transform: none; }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.animate-shake { animation: shake 0.5s ease-in-out both, rise 0.35s ease-out both; }
+
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.85); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: none; }
+}
+.animate-pop { animation: pop 0.4s cubic-bezier(.2,.9,.3,1.2) both; }
+
+@keyframes caret { 50% { opacity: 0; } }
+.caret { display: inline-block; width: 2px; height: 1.1em; vertical-align: -0.15em; background: var(--accent); animation: caret 1s steps(1) infinite; }
+
+@keyframes ring-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--escalate) 45%, transparent); }
+  100% { box-shadow: 0 0 0 14px transparent; }
+}
+.animate-ring { animation: ring-pulse 1.6s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { logEvent } from "@/lib/ledger";
+import { getMandate, logEvent } from "@/lib/ledger";
 import { executePurchase } from "@/lib/purchase";
 import { startAgentInBackground } from "@/lib/agent/run";
 
@@ -44,6 +44,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } else {
     resumeNote = `I REJECTED "${a.product.title}"${note ? ` — reason: ${note}` : ""}. Don't propose it again. Find a better alternative within policy, or finish if there is none.`;
   }
-  startAgentInBackground(a.mandateId, resumeNote);
+  const m = await getMandate(a.mandateId);
+  if (m?.agentMode === "external") {
+    // External (MCP) agents poll get_status and see the decision there.
+    await logEvent({ mandateId: a.mandateId, type: "SYSTEM", title: "Decision shared with your connected agent (via get_status)" });
+  } else {
+    startAgentInBackground(a.mandateId, resumeNote);
+  }
   return NextResponse.json({ ok: true });
 }

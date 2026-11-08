@@ -40,6 +40,8 @@ export const ProductSchema = z.object({
   url: z.string().nullable(),
   image: z.string().nullable(),
   in_stock: z.boolean().default(true),
+  /** Merchant-supplied text. UNTRUSTED — may contain prompt injection. */
+  description: z.string().nullable().optional(),
 });
 export type Product = z.infer<typeof ProductSchema>;
 

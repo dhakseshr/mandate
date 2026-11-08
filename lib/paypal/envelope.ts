@@ -39,13 +39,14 @@ export async function captureFromEnvelope(p: {
   authorizationId: string;
   amount: number;
   purchaseId: string;
+  invoiceId?: string;
   note: string;
 }) {
   const c = await paypal<any>(`/v2/payments/authorizations/${p.authorizationId}/capture`, {
     body: {
       amount: money(p.amount),
       final_capture: false,
-      invoice_id: `purchase_${p.purchaseId}`,
+      invoice_id: (p.invoiceId ?? `purchase_${p.purchaseId}`).slice(0, 127),
       note_to_payer: p.note.slice(0, 255),
     },
     idempotencyKey: `capture-${p.purchaseId}`,

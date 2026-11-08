@@ -25,6 +25,7 @@ export async function registerShipment(p: { mandateId: string; runId?: string | 
       tool: "create_shipment_tracking",
       title: `Shipment registered with PayPal (simulated USPS ${tracking})`,
       paypalId: p.captureId,
+      detail: { api: `Agent Toolkit create_shipment_tracking → POST /v2/checkout/orders/${p.orderId}/track` },
     });
   } catch (err) {
     console.warn("[tracking]", err);

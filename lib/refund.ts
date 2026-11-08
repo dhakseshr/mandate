@@ -41,6 +41,7 @@ export async function refundPurchase(purchaseId: string, reason: string) {
       merchant: p.merchant,
       paypalId: refundId,
       tool: "create_refund",
+      detail: { api: via === "PayPal Agent Toolkit" ? `Agent Toolkit create_refund → POST /v2/payments/captures/${p.captureId}/refund` : `POST /v2/payments/captures/${p.captureId}/refund` },
     });
     return { refundId, via };
   });

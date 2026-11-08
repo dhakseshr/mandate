@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { compileMandate } from "@/lib/policy/compiler";
 import { logEvent, newId } from "@/lib/ledger";
 import { desc } from "drizzle-orm";
+import { RED_TEAM_MARKER } from "@/lib/redteam";
 
 export const runtime = "nodejs";
 
@@ -12,14 +13,17 @@ export async function POST(req: Request) {
   if (!body.success) return NextResponse.json({ error: "Describe what you want bought (5-1000 chars)." }, { status: 400 });
 
   try {
-    const policy = await compileMandate(body.data.text);
+    const redTeam = RED_TEAM_MARKER.test(body.data.text);
+    const text = body.data.text.replace(RED_TEAM_MARKER, "").trim();
+    const policy = await compileMandate(text);
     const id = newId("man");
     await db.insert(schema.mandates).values({
       id,
-      rawText: body.data.text,
+      rawText: text,
       policy,
       status: "DRAFT",
       budgetTotal: policy.budget_total,
+      redTeam,
     });
     await logEvent({ mandateId: id, type: "SYSTEM", title: "Mandate compiled into policy", detail: { policy } });
     return NextResponse.json({ id });

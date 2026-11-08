@@ -20,9 +20,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!m) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!["DRAFT", "AWAITING_AUTH"].includes(m.status)) return NextResponse.json({ error: "Policy is locked once the budget is authorized." }, { status: 409 });
 
-  const parsed = PolicySchema.safeParse({ ...m.policy, ...(await req.json()).policy });
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
-  await db.update(schema.mandates).set({ policy: parsed.data, budgetTotal: parsed.data.budget_total }).where(eq(schema.mandates.id, id));
-  await logEvent({ mandateId: id, type: "HUMAN", title: "You edited the policy", detail: { policy: parsed.data } });
+  const body = (await req.json()) as { policy?: Record<string, unknown>; agentMode?: string };
+  if (body.agentMode) {
+    if (!["builtin", "external"].includes(body.agentMode)) return NextResponse.json({ error: "agentMode must be builtin|external" }, { status: 400 });
+    await db.update(schema.mandates).set({ agentMode: body.agentMode }).where(eq(schema.mandates.id, id));
+    await logEvent({
+      mandateId: id,
+      type: "HUMAN",
+      title: body.agentMode === "external" ? "You chose to connect your own AI agent (MCP)" : "You chose Mandate's built-in agent",
+    });
+  }
+  if (body.policy) {
+    const parsed = PolicySchema.safeParse({ ...m.policy, ...body.policy });
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
+    await db.update(schema.mandates).set({ policy: parsed.data, budgetTotal: parsed.data.budget_total }).where(eq(schema.mandates.id, id));
+    await logEvent({ mandateId: id, type: "HUMAN", title: "You edited the policy", detail: { policy: parsed.data } });
+  }
   return NextResponse.json({ ok: true });
 }

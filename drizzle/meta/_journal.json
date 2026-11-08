@@ -15,6 +15,20 @@
       "when": 1794128250899,
       "tag": "0001_unusual_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794139944359,
+      "tag": "0002_amused_tattoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794140050592,
+      "tag": "0003_brainy_krista_starr",
+      "breakpoints": true
     }
   ]
 }

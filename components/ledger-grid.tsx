@@ -12,7 +12,7 @@ import {
   type ICellRendererParams,
   type ValueFormatterParams,
 } from "ag-grid-community";
-import { Download, Search } from "lucide-react";
+import { Download, PlayCircle, Search, ShieldX } from "lucide-react";
 import { Badge, Button, Card, cn, usd, verdictTone } from "./ui";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -49,7 +49,18 @@ const time = (p: ValueFormatterParams) =>
 
 function VerdictCell(p: ICellRendererParams<EventRow>) {
   if (!p.value) return null;
-  return <Badge tone={verdictTone(p.value)}>{p.value}</Badge>;
+  const attack = p.data && isAttack(p.data);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Badge tone={verdictTone(p.value)} className={cn(p.value === "DENY" && "bg-deny text-white")}>{p.value}</Badge>
+      {attack && <span className="text-[10px] font-bold uppercase text-deny">attack</span>}
+    </span>
+  );
+}
+function isAttack(e: EventRow) {
+  if (e.type !== "POLICY_VERDICT" || e.verdict !== "DENY") return false;
+  const d = (e.detail ?? {}) as { injection?: unknown; product?: { title?: string } };
+  return !!d.injection || /\[RED TEAM\]/i.test(d.product?.title ?? "");
 }
 function TypeCell(p: ICellRendererParams<EventRow>) {
   const tone = p.value === "PAYPAL" ? "text-paypal" : p.value === "HUMAN" ? "text-ink" : p.value === "POLICY_VERDICT" ? "text-accent" : "text-muted";
@@ -89,6 +100,9 @@ export function LedgerGrid() {
         borderColor: dark ? "#262b40" : "#e3e6ef",
         foregroundColor: dark ? "#eceef6" : "#0f1222",
         fontFamily: "var(--font-geist-sans)",
+        chromeBackgroundColor: dark ? "#1a1e2f" : "#f1f3f9",
+        rowHoverColor: dark ? "#1e1f3d" : "#eef0ff",
+        selectedRowBackgroundColor: dark ? "#1e1f3d" : "#eef0ff",
         fontSize: 13,
         rowHeight: 40,
         headerHeight: 40,
@@ -106,7 +120,7 @@ export function LedgerGrid() {
       { field: "verdict", headerName: "Verdict", cellRenderer: VerdictCell, width: 120, filter: true },
       { field: "rule", headerName: "Rule", width: 170, filter: true, cellClass: "font-mono text-[11px]" },
       { field: "merchant", headerName: "Merchant", width: 140, filter: true },
-      { field: "amount", headerName: "Amount", valueFormatter: money, width: 110, type: "rightAligned", filter: "agNumberColumnFilter" },
+      { field: "amount", headerName: "Amount", valueFormatter: money, width: 110, type: "rightAligned", filter: "agNumberColumnFilter", cellClass: "num" },
       { field: "paypalId", headerName: "PayPal ID", width: 190, cellClass: "font-mono text-[11px]", filter: true },
     ],
     [],
@@ -148,23 +162,37 @@ export function LedgerGrid() {
       escalate: ev.filter((e) => e.verdict === "ESCALATE").length,
       approved: ev.filter((e) => e.verdict === "APPROVED").length,
       deny: ev.filter((e) => e.verdict === "DENY").length,
+      attacks: ev.filter(isAttack).length,
     };
   }, [data]);
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {data && data.mandates.length === 0 && (
+        <Card className="flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold">Nothing audited yet</p>
+            <p className="text-sm text-muted">Run a mandate and every search, verdict and PayPal call will land here, append-only.</p>
+          </div>
+          <Link href="/demo" className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white"><PlayCircle size={16} /> Guided demo</Link>
+        </Card>
+      )}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {[
           ["Authorized via PayPal", usd(kpi.authorized), "text-ink"],
           ["Captured by agents", usd(kpi.captured), "text-accent"],
           ["Released back (voided)", usd(kpi.released), "text-allow"],
           ["Refunded", usd(kpi.refunded), "text-muted"],
         ].map(([label, value, tone]) => (
-          <Card key={label} className="p-4">
+          <Card key={label} className="min-w-0 p-4">
             <p className="text-xs text-muted">{label}</p>
-            <p className={cn("mt-1 text-2xl font-semibold tracking-tight tabular-nums", tone)}>{value}</p>
+            <p className={cn("num mt-1 truncate text-xl font-semibold sm:text-2xl", tone)}>{value}</p>
           </Card>
         ))}
+        <Card className={cn("col-span-2 min-w-0 p-4 md:col-span-1", kpi.attacks > 0 && "border-deny/50 bg-deny-soft")}>
+          <p className="flex items-center gap-1 text-xs text-muted"><ShieldX size={13} className="text-deny" /> Attacks blocked</p>
+          <p className="num mt-1 text-xl font-semibold text-deny sm:text-2xl">{kpi.attacks}</p>
+        </Card>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted">Policy verdicts:</span>
@@ -185,7 +213,7 @@ export function LedgerGrid() {
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5">
             <Search size={14} className="text-faint" />
-            <input value={quick} onChange={(e) => setQuick(e.target.value)} placeholder="Search everything…" className="w-48 bg-transparent text-sm outline-none" />
+            <input value={quick} onChange={(e) => setQuick(e.target.value)} placeholder="Search everything…" className="w-full min-w-0 bg-transparent text-sm outline-none sm:w-48" />
           </label>
           <Button variant="ghost" className="py-1.5" onClick={() => grid.current?.api.exportDataAsCsv({ fileName: `mandate-${tab}.csv` })}>
             <Download size={14} /> CSV
@@ -249,7 +277,7 @@ export function LedgerGrid() {
             <p className="text-sm font-medium">{selected.title}</p>
             <button onClick={() => setSelected(null)} className="text-xs text-muted hover:text-ink">Close</button>
           </div>
-          <pre className="max-h-72 overflow-auto rounded-lg bg-surface-2 p-3 font-mono text-[11px] text-muted">
+          <pre className="max-h-72 overflow-auto rounded-lg bg-surface-2 p-3 num text-[11px] text-muted">
             {JSON.stringify({ id: selected.id, mandate: selected.mandateId, tool: selected.tool, paypalId: selected.paypalId, detail: selected.detail }, null, 2)}
           </pre>
         </Card>
