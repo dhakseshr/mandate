@@ -60,17 +60,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
           <Card className="p-5">
             <h3 className="mb-3 text-sm font-semibold">Purchases</h3>
             <ul className="space-y-3">
-              {purchases.map((p) => (
-                <li key={p.id} className="flex gap-3">
-                  <Thumb src={p.product.image} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{p.product.title}</p>
-                    <p className="text-xs text-muted">{p.merchant} · {usd(p.amount)}</p>
-                    <p className="font-mono text-[10px] text-faint">capture {p.captureId}</p>
-                  </div>
-                  <Badge tone={p.status === "CAPTURED" ? "allow" : "neutral"}>{p.status.toLowerCase()}</Badge>
-                </li>
-              ))}
+              {purchases.map((p) => <PurchaseRow key={p.id} p={p} onDone={onChange} />)}
             </ul>
           </Card>
         )}
@@ -110,6 +100,9 @@ function Envelope({ view }: { view: View }) {
         <div><dt className="text-faint">Spent</dt><dd className="font-medium">{usd(spent)}</dd></div>
         <div><dt className="text-faint">{closed ? "Released" : "Remaining"}</dt><dd className="font-medium">{usd(remaining)}</dd></div>
       </dl>
+      {m.refundedTotal > 0 && (
+        <p className="mt-2 text-xs text-muted">Refunded to you: <span className="font-medium text-ink">{usd(m.refundedTotal)}</span></p>
+      )}
       {m.authorizationId && <p className="mt-3 truncate font-mono text-[10px] text-faint">auth {m.authorizationId}</p>}
     </Card>
   );
@@ -161,6 +154,64 @@ function ApprovalCard({ a, onDone }: { a: View["approvals"][number]; onDone: () 
         </Button>
       </div>
     </Card>
+  );
+}
+
+function PurchaseRow({ p, onDone }: { p: View["purchases"][number]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function refund() {
+    setBusy(true);
+    setErr(null);
+    const r = await fetch(`/api/purchases/${p.id}/refund`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+    if (!r.ok) setErr((await r.json()).error);
+    setBusy(false);
+    setOpen(false);
+    onDone();
+  }
+  return (
+    <li>
+      <div className="flex gap-3">
+        <Thumb src={p.product.image} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{p.product.title}</p>
+          <p className="text-xs text-muted">{p.merchant} · {usd(p.amount)}</p>
+          <p className="font-mono text-[10px] text-faint">capture {p.captureId}</p>
+          {p.trackingNumber && <p className="font-mono text-[10px] text-faint">USPS {p.trackingNumber} (sim.)</p>}
+          {p.refundId && <p className="font-mono text-[10px] text-faint">refund {p.refundId}</p>}
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <Badge tone={p.status === "CAPTURED" ? "allow" : "neutral"}>{p.status.toLowerCase()}</Badge>
+          {p.status === "CAPTURED" && !open && (
+            <button onClick={() => setOpen(true)} className="text-xs text-muted underline-offset-2 hover:text-deny hover:underline">
+              Refund
+            </button>
+          )}
+        </div>
+      </div>
+      {open && (
+        <div className="mt-2 flex gap-2">
+          <input
+            autoFocus
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && refund()}
+            placeholder="Reason, e.g. wrong size"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          <Button variant="deny" className="px-3 py-1.5" disabled={busy} onClick={refund}>
+            {busy ? <Loader2 size={14} className="animate-spin" /> : "Refund"}
+          </Button>
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs text-deny">{err}</p>}
+    </li>
   );
 }
 

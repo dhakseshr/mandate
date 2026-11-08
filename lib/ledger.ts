@@ -63,8 +63,10 @@ export async function getMandateView(id: string) {
     db.select({ id: schema.agentRuns.id, status: schema.agentRuns.status, error: schema.agentRuns.error })
       .from(schema.agentRuns).where(eq(schema.agentRuns.mandateId, id)).orderBy(desc(schema.agentRuns.startedAt)).limit(1),
   ]);
-  const { catalog: _catalog, ...rest } = mandate;
-  return { mandate: rest, events, approvals, purchases, run: runs[0] ?? null };
+  // The catalog is internal (can be large) — don't ship it to the browser.
+  const rest: Omit<Mandate, "catalog"> & { catalog?: unknown } = { ...mandate };
+  delete rest.catalog;
+  return { mandate: rest as Omit<Mandate, "catalog">, events, approvals, purchases, run: runs[0] ?? null };
 }
 export type MandateView = NonNullable<Awaited<ReturnType<typeof getMandateView>>>;
 

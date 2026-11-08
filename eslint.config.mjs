@@ -20,6 +20,10 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    // Raw PayPal / toolkit JSON is loosely typed at the API boundary on purpose.
+    rules: { "@typescript-eslint/no-explicit-any": "warn" },
+  },
 ];
 
 export default eslintConfig;

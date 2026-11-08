@@ -1,0 +1,43 @@
+# Render Blueprint — one click: New > Blueprint > pick this repo.
+databases:
+  - name: mandate-db
+    plan: free
+    databaseName: mandate
+    user: mandate
+
+services:
+  - type: web
+    name: mandate
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node scripts/migrate.mjs && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mandate-db
+          property: connectionString
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: AI_PROVIDER
+        value: goedel
+      - key: GOEDEL_BASE_URL
+        value: https://api.goedelmachines.com/v1
+      - key: GOEDEL_MODEL
+        value: deepseek/deepseek-v4.1-flash
+      # Secrets: Render prompts for these on first deploy (never committed).
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: GOEDEL_API_KEY
+        sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false

@@ -11,13 +11,14 @@ function get() {
     clientId: env.paypal.clientId(),
     clientSecret: env.paypal.clientSecret(),
     configuration: {
+      // Keys match the toolkit's internal action map (verified against @paypal/agent-toolkit 1.11).
       actions: {
         orders: { get: true },
         shipment: { create: true, get: true },
-        refunds: { create: true, get: true },
+        payments: { createRefund: true, getRefunds: true },
         transactions: { list: true },
         disputes: { list: true, get: true },
-        reporting: { insights: true },
+        insights: { get: true },
       },
       context: { sandbox: env.paypal.sandbox() },
     },
@@ -35,11 +36,26 @@ export type ToolkitTool =
   | "list_disputes"
   | "get_dispute";
 
-export async function callToolkit(name: ToolkitTool, args: Record<string, unknown>): Promise<unknown> {
+/**
+ * Call a toolkit tool and return parsed JSON. The toolkit sometimes returns a JSON string and
+ * sometimes reports API failures as a string instead of throwing — normalise both into a throw.
+ */
+export async function callToolkit<T = any>(name: ToolkitTool, args: Record<string, unknown>): Promise<T> {
   const tools = get().getTools() as Record<string, { execute?: (a: any, o?: any) => Promise<unknown> }>;
   const t = tools[name];
   if (!t?.execute) throw new Error(`PayPal Agent Toolkit tool not enabled: ${name}`);
-  return t.execute(args, { toolCallId: name, messages: [] });
+  const raw = await t.execute(args, { toolCallId: name, messages: [] });
+  let out: any = raw;
+  if (typeof raw === "string") {
+    try {
+      out = JSON.parse(raw);
+    } catch {
+      throw new Error(`Toolkit ${name}: ${raw.slice(0, 200)}`);
+    }
+  }
+  if (out && typeof out === "object" && (out.error || out.name === "UNPROCESSABLE_ENTITY" || out.debug_id && !out.id))
+    throw new Error(`Toolkit ${name}: ${JSON.stringify(out).slice(0, 300)}`);
+  return out as T;
 }
 
 export function enabledToolkitTools(): string[] {

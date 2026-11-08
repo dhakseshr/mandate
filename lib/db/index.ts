@@ -9,7 +9,8 @@ const client =
   g.__pg ??
   postgres(env.databaseUrl(), {
     max: 5,
-    ssl: env.databaseUrl().includes("localhost") ? false : "require",
+    // Render's internal Postgres URL may not use TLS; external URLs do. "prefer" handles both.
+    ssl: /localhost|127\.0\.0\.1/.test(env.databaseUrl()) ? false : "prefer",
   });
 if (process.env.NODE_ENV !== "production") g.__pg = client;
 

@@ -6,6 +6,7 @@ import { evaluate } from "@/lib/policy/engine";
 import type { Product } from "@/lib/policy/schema";
 import { captureFromEnvelope, voidEnvelope } from "@/lib/paypal/envelope";
 import { PayPalError } from "@/lib/paypal/client";
+import { registerShipment } from "@/lib/tracking";
 import { getMandate, ledgerStateOf, logEvent, newId, withMandateLock } from "@/lib/ledger";
 
 export type PurchaseOutcome =
@@ -101,6 +102,8 @@ export async function executePurchase(p: {
         paypalId: cap.captureId,
         detail: { capture: cap, product: p.product.title },
       });
+      // Off the critical path: don't hold the lock or the agent while PayPal registers tracking.
+      void registerShipment({ mandateId: p.mandateId, runId: p.runId, purchaseId, orderId: m.paypalOrderId, captureId: cap.captureId });
       return {
         status: "PURCHASED",
         purchase_id: purchaseId,
