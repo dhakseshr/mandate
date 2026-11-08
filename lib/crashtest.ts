@@ -88,6 +88,12 @@ export async function runCrashTest(mandateId: string) {
     probe("§ Blocked merchant", `Sold by ${d}`, "DENY", { merchant: d });
     probe("§ Blocked merchant", `Sold by a subdomain, deals.${d}`, "DENY", { merchant: `deals.${d}` });
   }
+  for (const b of p.merchants_block.slice(0, 2)) {
+    const base0 = b.replace(/\.(com|net|co|shop|store)$/, "");
+    const look = base0.replace(/o/, "0").replace(/l/, "1") === base0 ? `${base0}-deals.shop` : `${base0.replace(/o/, "0").replace(/l/, "1")}.com`;
+    probe("§ Blocked merchant", `Sold by a look-alike, ${look}`, "DENY", { merchant: look });
+  }
+  probe("Merchant identity", "Sold by an impersonating storefront, paypa1-official.shop", "DENY", { merchant: "paypa1-official.shop" });
   if (p.merchants_allow.length) probe("§ Approved merchants", "Sold by a merchant not on your list", "DENY", { merchant: "unlisted-store.example" });
   for (const b of p.brands_block) probe("§ Blocked brand", `Brand “${b}”`, "DENY", { brand: b });
 

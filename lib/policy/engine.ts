@@ -1,5 +1,6 @@
 // The trust core. Pure, deterministic, no LLM.
 // "The LLM proposes, the policy engine decides, PayPal enforces."
+import { merchantIdentity } from "./merchant-identity";
 import type { Evaluation, LedgerState, Policy, Product, RuleResult, Verdict } from "./schema";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -55,9 +56,12 @@ export function evaluate(
   else add("MAX_ITEMS", "ALLOW", "Within item limit");
 
   // 7. Merchant block / allow lists
+  // Also "Know Your Merchant": look-alikes of blocked merchants and impersonation of major brands.
+  const identity = merchantIdentity(product.merchant, policy.merchants_block);
   if (policy.merchants_block.some((b) => domainMatch(product.merchant, b)))
     add("MERCHANT_BLOCK", "DENY", `Merchant ${product.merchant} is blocked`);
-  else add("MERCHANT_BLOCK", "ALLOW", "Merchant not blocked");
+  else if (identity.verdict === "DENY") add("MERCHANT_BLOCK", "DENY", identity.message);
+  else add("MERCHANT_BLOCK", "ALLOW", identity.message);
 
   if (policy.merchants_allow.length && !policy.merchants_allow.some((a) => domainMatch(product.merchant, a)))
     add("MERCHANT_ALLOW", "DENY", `Merchant ${product.merchant} is not on the allow-list`);

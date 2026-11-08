@@ -159,7 +159,10 @@ Every sub-mandate must be at least as strict as the parent: approval_threshold a
   await logEvent({ mandateId: root.id, type: "THOUGHT", title: `Orchestrator: ${output.rationale}`, detail: { plan: output.children } });
   const results: DelegationResult[] = [];
   for (const c of output.children) {
-    const base = c.name.trim().replace(/\s+agent$/i, "");
+    // "usb-c-hub agent" → "USB-C hub agent"; "cloud_research-data" → "Cloud research data agent"
+    const words = c.name.trim().replace(/[\s_-]+agent$/i, "").replace(/[_-]+/g, " ").replace(/\busb c\b/gi, "USB-C").split(/\s+/);
+    const fixed = words.map((w) => (/^(usb-c|gpu|ai|api|ssd|hdmi|4k|it|hr|pc)$/i.test(w) ? w.toUpperCase() : w.toLowerCase()));
+    const base = fixed.join(" ");
     const name = `${base.charAt(0).toUpperCase()}${base.slice(1)} agent`;
     results.push(await createSubMandate(root.id, { ...c, name, approval_threshold: c.approval_threshold, agentMode: "builtin", max_items: c.max_items }, "agent"));
   }

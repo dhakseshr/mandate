@@ -23,6 +23,8 @@ export const PolicySchema = z.object({
   must_have: z.array(z.string()).default([]).describe("Soft preferences, e.g. 'waterproof'"),
   expires_in_hours: z.number().positive().default(72),
   ambiguities: z.array(z.string()).default([]).describe("Questions to ask the user if anything is unclear"),
+  /** Autonomy profile the human chose (presets the approval line / per-item cap; never loosens stated limits). */
+  autonomy: z.enum(["careful", "balanced", "autopilot"]).nullable().default(null),
   /** Filled by code, not the model: corrections the deterministic cross-check made to the AI's output. */
   cross_check_fixes: z.array(z.string()).default([]),
 });

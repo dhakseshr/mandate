@@ -11,6 +11,7 @@ import { captureFromEnvelope } from "@/lib/paypal/envelope";
 import { getChain, getDescendants, getMandate, logEvent, newId, treeKey, withMandateLock, type Mandate } from "@/lib/ledger";
 import { signMandate } from "@/lib/signing";
 import { fulfil, issueChallenge, providerById, verifyChallenge, type Challenge } from "./providers";
+import { payoutProviders } from "./payouts";
 
 export const TAB_SETTLE_AT = 1.0; // USD — batch micro-charges into one PayPal capture
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -191,6 +192,8 @@ export async function settleTabLocked(rootId: string, runId?: string | null) {
       paypalId: cap.captureId,
       detail: { calls: rows.map((r) => ({ id: r.id, provider: r.merchant, amount: r.amount })), api: `POST /v2/payments/authorizations/${root.authorizationId}/capture` },
     });
+    // Providers get paid their share through PayPal Payouts (off the lock-critical path is fine: it's idempotent).
+    await payoutProviders({ rootId, runId, settlementId, captureId: cap.captureId, rows: rows.map((r) => ({ id: r.id, merchant: r.merchant, amount: r.amount })) });
     return { capture_id: cap.captureId, amount, calls: rows.length };
   } catch (err) {
     await logEvent({ mandateId: rootId, runId, type: "PAYPAL", tool: "tab", title: `Tab settlement failed: ${String(err).slice(0, 140)} — calls stay accrued` });

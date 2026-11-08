@@ -34,5 +34,6 @@ export async function compileMandate(text: string, today = new Date()): Promise<
   if (!compiled.goal.trim()) compiled.goal = text.trim().slice(0, 200);
   // The model interprets; deterministic code double-checks it against your literal words.
   const { policy, fixes } = crossCheck(text, compiled);
-  return PolicySchema.parse({ ...policy, cross_check_fixes: fixes });
+  // Autonomy is the human's choice on the review screen, never the model's.
+  return PolicySchema.parse({ ...policy, cross_check_fixes: fixes, autonomy: null });
 }
