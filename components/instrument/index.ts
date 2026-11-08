@@ -2,3 +2,5 @@ export { InstrumentFace, ClauseRow, SignatureLine, Perforation, fmtDate } from "
 export type { InstrumentFaceProps, InstrumentMandate } from "./instrument-face";
 export { CLAUSE_FIELDS, VALIDITY_FIELD, ENFORCER_LABEL, clausesOf, formatValue, editText, parseEdit, isSet } from "./clauses";
 export type { Clause, ClauseField, ClauseKind, Enforcer } from "./clauses";
+export { AutonomyChoice } from "./autonomy";
+export type { Autonomy } from "./autonomy";

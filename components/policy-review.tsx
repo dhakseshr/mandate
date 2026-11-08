@@ -11,6 +11,7 @@ import {
   SignatureLine,
   CLAUSE_FIELDS,
   VALIDITY_FIELD,
+  AutonomyChoice,
   editText,
   isSet,
   parseEdit,
@@ -162,6 +163,15 @@ export function PolicyReview({ view, onChange }: { view: View; onChange: () => v
 
   const stub = (
     <div className="grid gap-6">
+      <AutonomyChoice
+        mandateId={mandate.id}
+        value={policy.autonomy}
+        approvalThreshold={policy.approval_threshold}
+        maxPerItem={policy.max_per_item}
+        onChange={onChange}
+        disabled={authorizing}
+      />
+
       <fieldset disabled={authorizing}>
         <legend className="label mb-3 text-muted">Instruction · who shops</legend>
         <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Who shops">

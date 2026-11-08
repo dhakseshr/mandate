@@ -61,7 +61,7 @@ function Row({ r }: { r: AttackResult }) {
       </span>
       <span role="cell" className="hidden min-w-0 md:block">
         <span className="num block truncate text-[12px] text-ink" title={r.rule}>{RULE_LABEL[r.rule] ?? r.rule}</span>
-        <span className="num mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted" title={r.detail}>{r.detail}</span>
+        <span className="num mt-0.5 line-clamp-3 break-words text-[11px] leading-snug text-muted" title={r.detail}>{r.detail}</span>
       </span>
       <span role="cell" className="justify-self-end pt-0.5">
         <OutcomeMark r={r} />

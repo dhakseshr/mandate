@@ -111,7 +111,10 @@ const STATUS_TONE: Record<Row["status"], string> = {
 export function TabPanel({ view }: { view: View }) {
   const { events, purchases, approvals } = view;
   const rows = useMemo(() => buildRows(events, purchases, approvals), [events, purchases, approvals]);
-  const settlements = events.filter((e) => e.tool === "tab" && e.type === "PAYPAL" && e.paypalId);
+  const tabPaypal = events.filter((e) => e.tool === "tab" && e.type === "PAYPAL");
+  const payouts = tabPaypal.filter(isPayout);
+  const settlements = tabPaypal.filter((e) => e.paypalId && !isPayout(e));
+  const payoutFailures = tabPaypal.filter((e) => /^Provider payouts failed/.test(e.title));
   const tabP = purchases.filter(isTabPurchase);
   const accrued = tabP.filter((p) => p.status === "ACCRUED").reduce((s, p) => s + p.amount, 0);
   const settled = tabP.filter((p) => p.status === "SETTLED" || (p.status === "REFUNDED" && p.captureId)).reduce((s, p) => s + p.amount, 0);
@@ -182,23 +185,88 @@ export function TabPanel({ view }: { view: View }) {
         ))}
       </div>
 
-      {settlements.length > 0 && (
+      {(settlements.length > 0 || payoutFailures.length > 0) && (
         <ul className="border-t-[3px] border-double border-ink">
-          {settlements.map((e) => (
-            <li key={e.id} className="num flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-2 text-[12px] last:border-b-0">
-              <span className="min-w-0 text-paypal">
-                <span className="label mr-2 text-[10px]">Settled</span>
-                {Array.isArray(det(e).calls) ? `${det(e).calls.length} calls` : ""} · one PayPal capture
-              </span>
-              <span className="flex items-baseline gap-3">
-                <CopyId value={e.paypalId!} label="PayPal capture ID" />
-                <span className="text-ink">{usd(e.amount)}</span>
-              </span>
+          {settlements.map((e) => {
+            const mine = payouts.filter((p) => det(p).settlement_capture_id === e.paypalId);
+            return (
+              <li key={e.id} className="border-b border-line last:border-b-0">
+                <div className="num flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 py-2 text-[12px]">
+                  <span className="min-w-0 text-paypal">
+                    <span className="label mr-2 text-[10px]">Settled</span>
+                    {settlementLine(e)}
+                  </span>
+                  <span className="flex min-w-0 items-baseline gap-3">
+                    <CopyId value={e.paypalId!} label="PayPal capture ID" />
+                    <span className="text-ink">{usd(e.amount)}</span>
+                  </span>
+                </div>
+                {mine.map((p) => (
+                  <PayoutBatch key={p.id} e={p} />
+                ))}
+              </li>
+            );
+          })}
+          {payoutFailures.map((e) => (
+            <li key={e.id} className="num border-b border-line px-4 py-2 text-[12px] text-deny last:border-b-0">
+              <span className="label mr-2 text-[10px]">Payouts</span>
+              {e.title}
             </li>
           ))}
+          {/* Payout batches whose settlement isn't in view (shouldn't happen, but never hide money). */}
+          {payouts
+            .filter((p) => !settlements.some((e) => e.paypalId === det(p).settlement_capture_id))
+            .map((p) => (
+              <li key={p.id} className="border-b border-line last:border-b-0">
+                <PayoutBatch e={p} />
+              </li>
+            ))}
         </ul>
       )}
     </section>
+  );
+}
+
+type PayoutItem = { provider?: string; amount?: string | number; receiver?: string };
+const isPayout = (e: Ev) => det(e).api === "POST /v1/payments/payouts" || /PayPal Payouts/.test(e.title);
+const batchStatus = (e: Ev) => /\(([A-Z_]+)\)\s*$/.exec(e.title)?.[1] ?? "SUBMITTED";
+
+/** "Settled the tab: 5 API calls, $1.04 in one PayPal capture" → "5 API calls · one PayPal capture". */
+function settlementLine(e: Ev) {
+  const m = /^Settled the tab: (\d+) API calls?/.exec(e.title);
+  const n = m ? Number(m[1]) : Array.isArray(det(e).calls) ? det(e).calls.length : null;
+  return `${n != null ? `${n} API call${n === 1 ? "" : "s"} · ` : ""}one PayPal capture`;
+}
+
+/** Under a settlement: each provider's share, paid through one PayPal Payouts batch. */
+function PayoutBatch({ e }: { e: Ev }) {
+  const items = (Array.isArray(det(e).items) ? det(e).items : []) as PayoutItem[];
+  const status = batchStatus(e);
+  return (
+    <div className="border-t border-dashed border-line bg-surface-2 px-4 py-2.5">
+      <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="label text-[10px] text-ink">
+          Paid out to providers <span className="ml-1 text-muted">PayPal Payouts · {items.length} {items.length === 1 ? "provider" : "providers"}</span>
+        </span>
+        <span className="num text-[12px] text-ink">{usd(e.amount)}</span>
+      </p>
+      <ul className="mt-1.5 text-[12px]" aria-label="Provider payouts">
+        {items.map((it, i) => (
+          <li
+            key={`${it.provider}-${i}`}
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-t border-line/70 py-1.5 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_4.5rem_minmax(0,9rem)_5.5rem] sm:items-baseline"
+          >
+            <span className="min-w-0 truncate text-ink" title={it.provider}>{it.provider ?? "provider"}</span>
+            <span className="num min-w-0 truncate text-muted max-sm:order-3 max-sm:col-span-2" title={it.receiver}>{it.receiver ?? "—"}</span>
+            <span className="num text-right text-ink max-sm:order-2">{usd(Number(it.amount ?? 0))}</span>
+            <span className="min-w-0 max-sm:order-4">
+              <CopyId value={e.paypalId ?? "—"} label="PayPal payout batch ID" className="text-[11px]" />
+            </span>
+            <span className="label text-[10px] text-paypal max-sm:order-5 max-sm:text-right sm:text-right">{status}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

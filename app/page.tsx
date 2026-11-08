@@ -47,7 +47,7 @@ export default function Home() {
               Watch the attack fail <ArrowRight size={16} aria-hidden />
             </Link>
             <a href="#compose" className="inline-flex min-h-11 items-center justify-center text-[15px] text-ink underline decoration-line underline-offset-[6px] hover:decoration-ink sm:justify-start">
-              Draft a mandate
+              Describe a mission
             </a>
           </div>
           <Link href="/demo#mcp" className="mt-5 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-ink">
@@ -108,8 +108,8 @@ export default function Home() {
 
       {/* ── Compose ──────────────────────────────────────────────────────── */}
       <section aria-labelledby="draft" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
-        <SectionHead n="05" label="Draft" title="Draft a mandate.">
-          <p id="draft">Say what to buy, your budget, and when the agent must ask you first.</p>
+        <SectionHead n="05" label="Mission" title="Describe the mission.">
+          <p id="draft">Writ turns your mission into a signed mandate. Say what to get done, your budget, and when agents must ask you first — or start from a photo.</p>
           <p className="mt-3">You review the compiled rules before PayPal holds anything. Nothing is signed until you sign it.</p>
         </SectionHead>
         <div className="min-w-0 lg:col-span-8">
