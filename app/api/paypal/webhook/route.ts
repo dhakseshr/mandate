@@ -85,7 +85,10 @@ export async function POST(req: Request) {
 
   const mandateId = await findMandateId(body);
   if (mandateId) {
-    const amount = body.resource.amount ? Number(body.resource.amount.value) : undefined;
+    // A VOIDED authorization resource still carries the ORIGINAL amount — showing it would misstate
+    // what was released (the remainder is logged by our own void event), so omit it there.
+    const amount =
+      body.resource.amount && body.event_type !== "PAYMENT.AUTHORIZATION.VOIDED" ? Number(body.resource.amount.value) : undefined;
     await logEvent({
       mandateId,
       type: "PAYPAL",

@@ -41,7 +41,7 @@ const MORE: Scenario[] = [
     id: "D",
     title: "Team of agents · Home office for a new hire",
     body: "An orchestrator splits one $600 mandate into narrower sub-mandates — monitor, headphones, lamp — each signed, all backed by one PayPal hold. Every purchase is checked at every level; revoke any one, or the whole team.",
-    prompt: "Set up a home office for our new hire: a monitor, noise-cancelling headphones and a desk lamp. Max $600 total, ask me before any purchase over $150. Nothing from Amazon.",
+    prompt: "Set up a home office for our new hire: a monitor, noise-cancelling headphones and a desk lamp. Max $600 total, ask me before any purchase over $100. Nothing from Amazon.",
     verdicts: ["ALLOW", "ESCALATE", "DENY"],
     beats: "Beats 1–4, 6 · delegation",
     note: "Choose ‘A team of agents’ on the review screen.",

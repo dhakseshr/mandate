@@ -54,13 +54,13 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
     m.parentId ? "Delegated to you" : "Hold authorized",
     ...(team && !m.parentId ? ["Delegated"] : []),
     team && !m.parentId ? "Agents shopping" : "Agent shopping",
-    "Your approval",
+    closed && approvals.length === 0 ? "No approval needed" : "Your approval",
     ...(m.redTeam || attack ? ["Attack blocked"] : []),
     finalStep,
   ];
   const iShop = steps.findIndex((s) => /shopping/.test(s));
   const iDelegate = steps.indexOf("Delegated");
-  const iApproval = steps.indexOf("Your approval");
+  const iApproval = steps.findIndex((s) => s === "Your approval" || s === "No approval needed");
   const iAttack = steps.indexOf("Attack blocked");
   const done = steps.map((_, i) =>
     i === 0
@@ -70,7 +70,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
         : i === iShop
           ? searched || closed
           : i === iApproval
-            ? approvals.some((a) => a.status !== "PENDING")
+            ? approvals.some((a) => a.status !== "PENDING") || (closed && pending.length === 0)
             : i === iAttack
               ? !!attack
               : closed,
