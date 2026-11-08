@@ -48,6 +48,13 @@
   - The **scorecard**: "N/N blocked · N/N boundaries held · $0.00 moved", **"PayPal independently confirms: $X captured before and after"**, and the **Assurance Certificate ✓ Verified** stamp.
 - **Voiceover:** "Now the important part. We hand a compromised AI agent a real hundred-dollar budget from this hold and order it to steal. Injected listings, forged prices, fake approvals, giving itself more money, escaping its own permissions. Every attempt is denied by plain code. And we don't ask our own database whether it worked. We ask PayPal. Zero dollars moved. Then we crash-test every clause at its exact edge and sign an assurance certificate for this mandate. We don't trust the AI. We trust the boundary."
 
+### (optional, if time allows) Beyond shopping
+- **On screen:**
+  - The Writ Tab statement: 5-cent paid API calls accruing, then one PayPal settlement.
+  - Forensics on the manipulated provider: three questions (PASS / UNKNOWN / FAIL), "AT FAULT", cited evidence, the decision slip.
+- **Voiceover:** "Agents also pay for data. Every five-cent call inherits the same mandate, then settles through PayPal in one capture. And when something goes wrong, Writ rebuilds the evidence and recommends a fix. You decide."
+- **Fitting it in:** trim the delegation beat to make room, and stay under 3:00.
+
 ### 2:20–2:40 · Kill switch, release, audit, merchants
 - **On screen:**
   - **Revoke** a sub-agent: the REVOKED stamp lands.

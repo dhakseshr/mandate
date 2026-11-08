@@ -132,6 +132,48 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 
 ---
 
+### 3.10 Writ Tab: paid APIs (HTTP 402) ✅ Tested · UI ✅
+
+**How it works (`lib/tab/*`):**
+- Simulated providers return **Ed25519-signed 402 price challenges**. Keys are pinned; tampered or expired quotes are denied (`PROVIDER_SIGNATURE`).
+- Each call is evaluated by the same engine **at every delegation level**.
+- Approved calls get signed receipts, which providers check before returning data.
+- Calls accrue on a tab that **batch-settles as one PayPal partial capture** (≥ $1.00, or on close or revoke before the void).
+- Escalations work as normal approvals. Settled calls can be partially refunded.
+- Tools: `list_api_providers` and `buy_api_call` for agents and over MCP.
+
+**Test results:**
+- Calls paid: $0.05, $0.10 and $0.15.
+- Over the per-call cap → DENIED.
+- Tampered price → DENIED.
+- Blocked provider → DENIED.
+- Above the approval line → ESCALATED.
+
+### 3.11 Writ Forensics ✅ Tested · UI ✅
+
+**How it works (`lib/forensics.ts`, `/api/purchases/[id]/forensics`, `/forensics/[id]`):**
+- An evidence graph E1…En: intent, passkey, seal, delegation, listing, agent decision, 13 checks, receipt, payment, provider response, webhooks, complaint.
+- Deterministic checks answer three questions: authorized, agent compliance, merchant or provider delivery.
+- The LLM report must cite evidence IDs, and uncited claims are dropped by code.
+- Human-approved resolution: a refund via the Agent Toolkit, or an Ed25519-signed dispute pack.
+
+**Test result** (manipulated provider): provider at fault, high confidence, 0 dropped.
+
+### 3.12 Agent Passport ✅ · UI ✅
+- `/api/agents/[id]/passport` plus the `/agents/[id]` page.
+- A signed authority statement: delegation chain to the human, limits, spent, status, PayPal backing, latest certificate.
+- Verifiable via `/api/verify?check`.
+
+### 3.13 Voice input ✅
+- Mission dictation in the composer (Web Speech API). It never auto-submits.
+
+**Also fixed this round:**
+- Word-based category matching.
+- The cross-check now restores per-call caps, lowercase domain exclusions, and "X only" scope phrases.
+- Canonical JSON now handles dates.
+- Refunds now lock the whole delegation tree.
+- **29 tests.**
+
 ## 4. Screens: "The Signed Instrument" design ✅
 
 **Art direction:**

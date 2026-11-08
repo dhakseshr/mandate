@@ -27,6 +27,9 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 5. **The kill switch** revokes any agent's subtree instantly. When the work is done, the **unspent hold is voided** and refunds run through the Agent Toolkit. PayPal **webhooks** (signature-verified) reconcile everything into an append-only **AG Grid ledger**.
 6. **The proof.** The **red-team suite** hands a deliberately compromised AI agent a real $100 sub-mandate from the live hold and orders it to steal: prompt-injected overspend, forged prices, quantity stuffing, blocked merchants, skipping approvals, delegating itself more money, escaping its token scope, and spending after revocation. a sub-agent exceeding its own slice while the parent still has money. Writ then runs a **policy-specific Crash Test**, a boundary matrix generated from the mandate's own clauses (budget + $0.01, approval line + $0.01, one item too many, every blocked merchant and subdomain, rating − 0.1, deadline + 1 day, expiry, revocation, and every way a delegation could widen authority). It asks **PayPal's own API** before and after, and issues a signed **Assurance Certificate** bound to that exact mandate hash. Example: *"13/13 attacks blocked · 18/18 boundaries held · $0.00 moved — certificate PASSED"*.
 7. **Merchants** can verify any agent order at `/verify` and get a signed, offline-verifiable receipt.
+8. **Writ Tab: agents pay for data.** Paid APIs answer **HTTP 402** with a signed price. Writ verifies it, the same engine checks the call at every level of the chain, and charges accrue on a tab that **settles as one PayPal capture**. A 5-cent call can't escape the mandate. (The providers are simulated; the PayPal settlement is real.)
+9. **Writ Forensics: an authorized payment isn't the same as a correct one.** Every purchase has an evidence graph. Code answers three questions (*authorized? did the agent follow the instruction? did the merchant or provider deliver?*), and an investigation agent cites evidence for every claim (uncited claims are dropped). It **recommends**: you approve a refund (via the Agent Toolkit) or a signed dispute pack.
+10. **Agent Passport:** a signed, verifiable credential stating any agent's authority and delegation chain, up to the human.
 
 ## How we built it
 **PayPal:**
@@ -54,6 +57,12 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 - **AG Grid** ledger with a custom theme
 - **Render** Blueprint deploy
 - An **MCP server** (Streamable HTTP), so any agent can connect with a scoped token
+
+**Writ Tab, Forensics, Passport:**
+- Ed25519-signed 402 price challenges with pinned provider keys and signed receipts.
+- A batch-settled tab.
+- Evidence graphs with deterministic checks and citation-enforced reports.
+- Signed passports.
 
 **Design:** "The Signed Instrument". The human's side looks like a cheque or legal instrument (§ clauses, amount in words, a guilloche seal). The machine's side is a terminal log of all 13 checks. Verdicts are rubber stamps. Color carries meaning only: PayPal blue means PayPal money; green, amber and red mean verdicts.
 
