@@ -15,6 +15,7 @@ import { suiteState } from "./redteam/suite";
 import { RedTeamControl } from "./redteam/control";
 import { Scorecard } from "./redteam/scorecard";
 import { CrashTest } from "./redteam/crash-test";
+import { TabPanel, hasTab, isTabPurchase } from "./tab/tab-panel";
 
 /** Mission Control — the money is boxed; every decision is visible. */
 export function MissionControl({ view, onChange }: { view: View; onChange: () => void }) {
@@ -48,6 +49,8 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
   const proved = !!attack || !!suite.scorecard;
   const searched = events.some((e) => e.tool === "search_products" && e.type === "TOOL_RESULT");
   const rows = useMemo(() => collapse(events), [events]);
+  // Pay-per-call API charges live on the Writ Tab, not the physical-goods statement.
+  const goods = useMemo(() => purchases.filter((p) => !isTabPurchase(p)), [purchases]);
 
   // "Agent adapting…": a human just decided and the agent hasn't acted on it yet.
   const lastDecision = events.map(isDecision).lastIndexOf(true);
@@ -171,6 +174,8 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
 
       {(tree.length > 0 || (team && !m.parentId)) && <DelegationTree view={view} onChange={onChange} />}
 
+      {hasTab(view) && <TabPanel view={view} />}
+
       {attack && <AttackPanel e={attack} held={held} closed={closed} />}
 
       {canAttack && (
@@ -250,7 +255,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
             <ApprovalSlip key={a.id} a={a} authorizationId={mandate.authorizationId} onDone={onChange} />
           ))}
           {external && <ConnectAgent token={m.agentToken ?? null} connected={!!connectedEv} name={connectedName} active={mandate.status === "ACTIVE"} />}
-          {purchases.length > 0 && <Statement purchases={purchases} captured={mandate.spentTotal} refunded={mandate.refundedTotal} onDone={onChange} />}
+          {goods.length > 0 && <Statement purchases={goods} captured={mandate.spentTotal} refunded={mandate.refundedTotal} onDone={onChange} />}
           <InstrumentStub mandate={mandate} authorized={authorized} held={held} closed={closed} />
           {mandate.status === "ACTIVE" && (
             <section className="border border-line bg-surface px-4 py-3" aria-label="Kill switch">

@@ -190,3 +190,17 @@ body {
 /* Double rule under totals (bank statement). */
 .rule-double { border-bottom: 3px double var(--ink); }
 /* === end Agent A === */
+
+/* === Agent F additions === */
+/* Writ Tab statement columns: time · provider/resource · amount · status · receipt. Mobile: two columns. */
+.tab-cols { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.75rem; }
+@media (min-width: 640px) {
+  .tab-cols { grid-template-columns: 4.25rem minmax(0, 1fr) 4.5rem 7.5rem 5.5rem; }
+}
+/* Forensics: the hairline that threads evidence cards E1…En. */
+.evidence-chain { position: relative; }
+.evidence-chain::before { content: ""; position: absolute; left: 1.125rem; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.evidence-target { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Passport: machine-readable zone footer. */
+.mrz { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.75rem; line-height: 1.5; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; word-break: break-all; }
+/* === end Agent F === */

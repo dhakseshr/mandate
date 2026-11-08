@@ -21,6 +21,9 @@ const TAGS: { when: (e: Ev) => boolean; tag: (e: Ev) => Tag }[] = [
   { when: (e) => e.tool === "revoke", tag: () => ({ text: "REVOKE", tone: "text-deny" }) },
   { when: (e) => e.tool === "verify", tag: (e) => ({ text: "VERIFY", tone: e.verdict ? vTone(e.verdict) : "text-ink" }) },
   { when: (e) => e.tool === "passkey", tag: () => ({ text: "PASSKEY", tone: "text-ink" }) },
+  // Writ Tab: an HTTP 402 price challenge, then everything else on the tab (PayPal settlement stays PAYPAL).
+  { when: (e) => e.type === "TOOL_CALL" && e.tool === "tab", tag: (e) => ({ text: "402", tone: det(e).signature_valid === false ? "text-deny" : "text-ink" }) },
+  { when: (e) => e.tool === "tab" && e.type !== "PAYPAL" && e.type !== "POLICY_VERDICT", tag: (e) => ({ text: "TAB", tone: det(e).manipulated_provider ? "text-deny" : "text-ink" }) },
   { when: isPlan, tag: () => ({ text: "PLAN", tone: "text-ink" }) },
   { when: (e) => e.type === "THOUGHT", tag: (e) => ({ text: "AGENT", tone: det(e).hijacked ? "text-deny" : "text-ink" }) },
   { when: (e) => e.type === "TOOL_CALL" && e.tool === "propose_purchase", tag: () => ({ text: "PROPOSE", tone: "text-ink" }) },
@@ -107,6 +110,16 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
                 {d.rule && <> · {String(d.rule)}</>} · Ed25519-signed for the merchant
               </p>
             )}
+            {e.tool === "tab" && e.type === "SYSTEM" && d.purchase_id && (
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[12px] text-muted">
+                {d.manipulated_provider && <span className="label border border-deny px-1 py-0.5 text-[9px] text-deny">Manipulated data</span>}
+                <span>simulated provider</span>
+                <span>·</span>
+                <a href={`/forensics/${String(d.purchase_id)}`} className="text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                  Forensics →
+                </a>
+              </p>
+            )}
             {e.tool === "delegate" && d.childId && (
               <p className="mt-0.5 text-[12px] text-muted">
                 <a href={`/m/${d.childId}`} className="num text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
@@ -125,6 +138,7 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
 }
 
 function lineTone(e: Ev) {
+  if (e.tool === "tab") return det(e).manipulated_provider || det(e).signature_valid === false ? "text-deny" : "text-ink";
   if (e.tool === "delegate" || e.tool === "passkey") return "text-ink";
   if (e.tool === "revoke") return "text-ink";
   if (e.tool === "verify") return e.verdict === "DENY" ? "text-deny" : "text-ink";

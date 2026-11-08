@@ -59,6 +59,16 @@ const MORE: Scenario[] = [
     beats: "Beats 1–4, 6 · delegation",
     note: "Choose ‘A team of agents’ on the review screen.",
   },
+  {
+    id: "E",
+    title: "Research agent · paid data on a tab",
+    body: "No checkout — the agent pays data providers per API call (HTTP 402). Every call is priced, signed and checked; calls accrue on a Writ Tab and settle in one PayPal capture.",
+    prompt:
+      "Research cloud GPU demand for our board memo. Max $5 total, at most $0.50 per call, research data only, ask me before any call over $0.20.",
+    verdicts: ["ALLOW", "ESCALATE", "DENY"],
+    beats: "Beats 1–4, 6 · Writ Tab · Forensics",
+    note: "The agent pays providers per call via Writ Tab. One provider is manipulated — open Forensics on it.",
+  },
 ];
 
 const MCP_STEPS = [

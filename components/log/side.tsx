@@ -79,6 +79,13 @@ export function InstrumentStub({ mandate, authorized, held, closed }: { mandate:
         )}
       </dl>
       <a
+        href={`/agents/${encodeURIComponent(mandate.id)}`}
+        className="flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-[13px] text-ink hover:bg-surface-2"
+      >
+        <span>Agent passport</span>
+        <span aria-hidden className="num">→</span>
+      </a>
+      <a
         href={`/verify?mandate=${encodeURIComponent(mandate.id)}`}
         className="flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-[13px] text-ink hover:bg-surface-2"
       >
@@ -333,6 +340,9 @@ function StatementRow({ p, onDone }: { p: Purchase; onDone: () => void }) {
               )}
             </dd>
           </dl>
+          <a href={`/forensics/${p.id}`} className="num mt-1.5 inline-flex min-h-8 items-center text-[11px] text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+            Report a problem → Forensics
+          </a>
         </div>
       </div>
       {open && (

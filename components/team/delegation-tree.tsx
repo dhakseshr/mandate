@@ -208,7 +208,12 @@ function Child({ k, pending, onChange }: { k: TreeNode; pending: number; onChang
           </dl>
 
           <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-            <SealTag hash={k.signatureHash} className={revoked ? "text-muted" : undefined} />
+            <span className="flex items-center gap-3">
+              <SealTag hash={k.signatureHash} className={revoked ? "text-muted" : undefined} />
+              <Link href={`/agents/${k.id}`} className="label inline-flex min-h-11 items-center text-[10px] text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                Passport
+              </Link>
+            </span>
             {k.status === "ACTIVE" && <RevokeControl compact mandateId={k.id} name={k.name ?? "this sub-mandate"} amount={left} root={false} onDone={onChange} />}
           </div>
         </div>
