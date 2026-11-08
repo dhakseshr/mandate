@@ -27,4 +27,10 @@ describe("deterministic cross-check of the AI-compiled policy", () => {
     const r = crossCheck("Headphones under $150", { ...base, budget_total: 100 });
     expect(r.policy.budget_total).toBe(100);
   });
+
+  it("restores a per-call cap and a lowercase domain exclusion", () => {
+    const r = crossCheck("Research GPU providers. Max $5 total, at most $0.20 per call, never use insight-wire.example.", base);
+    expect(r.policy.max_per_item).toBe(0.2);
+    expect(r.policy.merchants_block).toContain("insight-wire.example");
+  });
 });

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { getMandate, logEvent } from "@/lib/ledger";
 import { executePurchase } from "@/lib/purchase";
+import { buyApiCall } from "@/lib/tab/tab";
 import { startAgentInBackground } from "@/lib/agent/run";
 
 export const runtime = "nodejs";
@@ -32,7 +33,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   let resumeNote: string;
-  if (decision === "APPROVE") {
+  if (decision === "APPROVE" && a.product.id.startsWith("api:")) {
+    // An escalated paid API call (Writ Tab): accrue it on the tab with the human's approval.
+    const out = await buyApiCall({ mandateId: a.mandateId, providerId: a.product.merchant, resource: a.product.description ?? a.product.title, purpose: a.rationale ?? "", humanApproved: true });
+    resumeNote = `I APPROVED the paid API call to ${a.product.merchant}. Result: ${JSON.stringify(out).slice(0, 600)}. Continue if more is needed, otherwise call finish.`;
+  } else if (decision === "APPROVE") {
     const out = await executePurchase({
       mandateId: a.mandateId,
       product: a.product,

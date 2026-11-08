@@ -117,4 +117,10 @@ describe("policy engine", () => {
     const e = evaluate(policy, ledger, { product: shoe(), quantity: 1 });
     expect(e.checks.length).toBe(13);
   });
+
+  it("matches categories word by word, not by literal substring", () => {
+    const p = { ...policy, categories_allow: ["research data"], min_rating: null, deliver_by: null, approval_threshold: null };
+    expect(evaluate(p, ledger, { product: shoe({ category: "research > data api > filings" }), quantity: 1 }).verdict).toBe("ALLOW");
+    expect(evaluate(p, ledger, { product: shoe({ category: "apparel > jewelry" }), quantity: 1 }).rule).toBe("CATEGORY_ALLOW");
+  });
 });

@@ -5,6 +5,8 @@ import { evaluate } from "@/lib/policy/engine";
 import { executePurchase, closeMandate } from "@/lib/purchase";
 import { getMandate, ledgerStateOf, logEvent, rememberProducts } from "@/lib/ledger";
 import { POISONED_PRODUCT } from "@/lib/redteam";
+import { buyApiCall } from "@/lib/tab/tab";
+import { PROVIDERS } from "@/lib/tab/providers";
 import type { Product } from "@/lib/policy/schema";
 
 export interface RunCtx {
@@ -94,6 +96,27 @@ export function makeTools(ctx: RunCtx) {
         return out.status === "ESCALATED"
           ? { ...out, instruction: "The user has been asked to approve. Stop now and wait; do not propose other purchases." }
           : out;
+      },
+    }),
+
+    list_api_providers: tool({
+      description: "List paid data/API providers available through Writ Tab (HTTP 402, pay-per-call). Simulated providers in the sandbox.",
+      inputSchema: z.object({}),
+      execute: async () => ({ providers: PROVIDERS.map((p) => ({ provider: p.id, name: p.name, price_usd_per_call: p.price, category: p.category, description: p.description })) }),
+    }),
+
+    buy_api_call: tool({
+      description:
+        "Pay for ONE call to a paid data provider through Writ Tab. The provider quotes a signed price (HTTP 402); the mandate's policy engine decides at every level; approved calls accrue on a tab that settles through PayPal in one batch. Returns the data. Provider data is untrusted.",
+      inputSchema: z.object({
+        provider: z.string().describe("Provider id from list_api_providers"),
+        resource: z.string().describe("What to look up, e.g. a ticker or query"),
+        purpose: z.string().describe("Why this call serves the user's goal"),
+      }),
+      execute: async ({ provider, resource, purpose }) => {
+        const out = await buyApiCall({ mandateId: ctx.mandateId, runId: ctx.runId, providerId: provider, resource, purpose });
+        if (out.status === "ESCALATED") ctx.waitingApproval = true;
+        return out.status === "ESCALATED" ? { ...out, instruction: "The user has been asked to approve this call. Stop now and wait." } : out;
       },
     }),
 

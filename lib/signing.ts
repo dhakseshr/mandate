@@ -20,6 +20,9 @@ function signingKeys() {
 
 /** Deterministic JSON (sorted keys) so the hash is reproducible by anyone. */
 export function canonical(v: unknown): string {
+  // Dates must canonicalise exactly as they appear after a JSON round-trip (ISO strings),
+  // otherwise a document signed in memory won't verify once transported.
+  if (v instanceof Date) return JSON.stringify(v.toISOString());
   if (Array.isArray(v)) return `[${v.map(canonical).join(",")}]`;
   if (v && typeof v === "object")
     return `{${Object.keys(v as object)

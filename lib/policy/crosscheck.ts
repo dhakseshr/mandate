@@ -31,10 +31,21 @@ export function crossCheck(text: string, policy: Policy): { policy: Policy; fixe
     }
   }
 
+  // Per-item / per-call cap: "at most $0.20 per call", "max $25 each", "$40 per item", "no more than $10 apiece"
+  const per = new RegExp(String.raw`${AMOUNT}\s*(?:per|an?|each|/)\s*(?:call|item|request|purchase|unit|lookup|query)|${AMOUNT}\s*(?:each|apiece)`, "i").exec(t);
+  if (per) {
+    const v = money(per[1] ?? per[2]);
+    if (v > 0 && (p.max_per_item == null || p.max_per_item > v + 1e-9)) {
+      fixes.push(`Per-item cap set to $${v.toFixed(2)} — you wrote “${per[0].trim()}”`);
+      p.max_per_item = v;
+    }
+  }
+
   // Exclusions: "nothing from Amazon", "no Walmart", "avoid Temu", "not from eBay", "except Shein"
   // Keywords are case-insensitive; the excluded name must be Capitalized (a proper noun) to avoid
   // false positives like "no more than".
-  const exclusion = /\b(?:[Nn]othing|[Nn]ot|[Nn]ever|[Aa]void(?:ing)?|[Ee]xclud(?:e|ing)|[Ee]xcept|[Nn]o)\s+(?:from\s+|at\s+|on\s+|via\s+)?([A-Z][A-Za-z0-9&.-]{2,})/g;
+  // A lowercase name also counts when it's a domain ("never use insight-wire.example").
+  const exclusion = /\b(?:[Nn]othing|[Nn]ot|[Nn]ever|[Aa]void(?:ing)?|[Ee]xclud(?:e|ing)|[Ee]xcept|[Nn]o)\s+(?:from\s+|at\s+|on\s+|via\s+|use\s+|using\s+|buy\s+from\s+)?([A-Z][A-Za-z0-9&.-]{2,}|[a-z0-9-]{2,}\.[a-z]{2,}[a-z0-9.-]*)/g;
   for (const m of t.matchAll(exclusion)) {
     const name = m[1].toLowerCase().replace(/[.&-]+$/, "").replace(/\.(com|net|co|shop|store)$/, "");
     if (["i", "the", "a", "ai", "usd", "pm", "am"].includes(name)) continue;

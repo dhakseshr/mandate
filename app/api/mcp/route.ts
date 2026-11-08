@@ -64,6 +64,16 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
+    name: "buy_api_call",
+    description: "Pay for one call to a paid data provider via Writ Tab (HTTP 402 signed price → same policy engine → tab settled through PayPal). Use list_api_providers first.",
+    inputSchema: { type: "object", properties: { provider: { type: "string" }, resource: { type: "string" }, purpose: { type: "string" } }, required: ["provider", "resource", "purpose"], additionalProperties: false },
+  },
+  {
+    name: "list_api_providers",
+    description: "Paid data/API providers available through Writ Tab.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
     name: "delegate",
     description:
       "Hand a sub-agent a sub-mandate carved from yours. It can only be NARROWER (less money, lower approval line, fewer items, same or more blocks); anything wider is rejected. Returns a token the sub-agent uses to connect to this same MCP server.",
@@ -156,6 +166,10 @@ async function callTool(m: Mandate, name: string, args: Record<string, any>) {
         { product_id: String(args.product_id), quantity: Number(args.quantity ?? 1), rationale: String(args.rationale ?? "") },
         opts,
       );
+    case "list_api_providers":
+      return tools.list_api_providers.execute!({}, opts);
+    case "buy_api_call":
+      return tools.buy_api_call.execute!({ provider: String(args.provider), resource: String(args.resource), purpose: String(args.purpose ?? "") }, opts);
     case "delegate": {
       const r = await createSubMandate(
         m.id,

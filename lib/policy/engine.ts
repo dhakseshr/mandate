@@ -71,7 +71,11 @@ export function evaluate(
   // 9. Category
   if (policy.categories_allow.length) {
     const cat = norm(product.category);
-    const ok = cat && policy.categories_allow.some((c) => cat.includes(norm(c)) || norm(c).includes(cat));
+    // Word-based: every word of an allowed category must appear in the product's category path
+    // ("research data" matches "research > data api > filings"; "shoes" matches "running shoes").
+    const words = (s: string) => s.split(/[^a-z0-9]+/).filter((w) => w.length > 1).map((w) => w.replace(/s$/, ""));
+    const catWords = new Set(words(cat));
+    const ok = cat && policy.categories_allow.some((c) => { const w = words(norm(c)); return w.length > 0 && w.every((x) => catWords.has(x)); });
     if (!cat) add("CATEGORY_ALLOW", "ESCALATE", "Product category unknown; needs human check");
     else if (!ok) add("CATEGORY_ALLOW", "DENY", `Category "${product.category}" not in mandate`);
     else add("CATEGORY_ALLOW", "ALLOW", `Category "${product.category}" permitted`);

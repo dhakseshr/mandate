@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db";
 import { evaluateChain } from "@/lib/policy/chain";
 import type { Product } from "@/lib/policy/schema";
 import { verifyOrder } from "@/lib/verify";
+import { settleTabLocked } from "@/lib/tab/tab";
 import { captureFromEnvelope, voidEnvelope } from "@/lib/paypal/envelope";
 import { PayPalError } from "@/lib/paypal/client";
 import { registerShipment } from "@/lib/tracking";
@@ -162,10 +163,13 @@ export async function executePurchase(p: {
   });
 }
 
-async function voidRoot(root: Mandate, runId?: string | null, reason = "released back to you") {
-  if (!root.authorizationId) return;
+async function voidRoot(root0: Mandate, runId?: string | null, reason = "released back to you") {
+  if (!root0.authorizationId) return;
+  // Settle any accrued Writ Tab API calls first (they were authorized), then void what is truly unspent.
+  await settleTabLocked(root0.id, runId);
+  const root = (await getMandate(root0.id)) ?? root0;
   try {
-    await voidEnvelope(root.authorizationId);
+    await voidEnvelope(root0.authorizationId);
     const voided = round2(root.authorizedAmount - root.spentTotal);
     await logEvent({
       mandateId: root.id,
@@ -173,8 +177,8 @@ async function voidRoot(root: Mandate, runId?: string | null, reason = "released
       type: "PAYPAL",
       title: `Voided remaining $${voided.toFixed(2)} — ${reason}`,
       amount: voided,
-      paypalId: root.authorizationId,
-      detail: { api: `POST /v2/payments/authorizations/${root.authorizationId}/void` },
+      paypalId: root0.authorizationId,
+      detail: { api: `POST /v2/payments/authorizations/${root0.authorizationId}/void` },
     });
   } catch (err) {
     await logEvent({ mandateId: root.id, runId, type: "PAYPAL", title: `Void failed: ${String(err)}` });
