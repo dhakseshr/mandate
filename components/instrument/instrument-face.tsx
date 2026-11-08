@@ -15,6 +15,8 @@ export type InstrumentMandate = {
   signedAt?: string | Date | null;
   /** Forward-compat: how the human signed ("passkey" → "Signed with passkey"). Defaults to the PayPal approval. */
   signedWith?: "paypal" | "passkey" | string | null;
+  /** sha256 of the intent the passkey signed. */
+  passkeyIntentHash?: string | null;
   /** Forward-compat: delegation. A sub-mandate shows "Under № parent" in the header strip. */
   parentId?: string | null;
 };
@@ -71,7 +73,7 @@ export function InstrumentFace({
   });
   const px = compact ? "px-4" : "px-5 sm:px-8";
 
-  const stubContent = stub ?? (signed ? <SignatureLine signedAt={mandate.signedAt} hash={mandate.signatureHash} method={mandate.signedWith} /> : null);
+  const stubContent = stub ?? (signed ? <SignatureLine signedAt={mandate.signedAt} hash={mandate.signatureHash} method={mandate.signedWith} intentHash={mandate.passkeyIntentHash} /> : null);
 
   return (
     <article className={cn("border border-line bg-surface text-ink shadow-paper", className)} aria-label={`Mandate ${mandate.id}`}>
@@ -270,10 +272,13 @@ export function SignatureLine({
   hash,
   pendingDate,
   method,
+  intentHash,
   className,
 }: {
   /** "passkey" renders "Signed with passkey"; anything else falls back to the default wording. */
   method?: string | null;
+  /** sha256 of the intent document the passkey signed — shown as "intent #abcd1234". */
+  intentHash?: string | null;
   signedAt?: string | Date | null;
   hash?: string | null;
   /** Date shown before signing (today). */
@@ -297,6 +302,22 @@ export function SignatureLine({
           {method === "passkey" && <> · with passkey</>}
           {hash && <span className="hidden sm:inline"> · Ed25519</span>}
         </p>
+        {method === "passkey" && hash && (
+          <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted">
+            <span className="text-allow" aria-hidden>✓</span>
+            <span>
+              Your device signed{" "}
+              {intentHash ? (
+                <>
+                  intent <span className="num text-ink" title={`sha256 ${intentHash}`}>#{intentHash.slice(0, 8)}</span>
+                </>
+              ) : (
+                "these clauses"
+              )}{" "}
+              — WebAuthn passkey
+            </span>
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 import { Stamp, cn, usd, type StampVerdict } from "../ui";
 import { CopyId, Thumb, checkGlyph, det, hhmmss, isAttack, isRedTeamProduct, type Check, type Ev, type LogProduct } from "./shared";
+import { shortName, useNames } from "../team/names";
 
 type Tag = { text: string; tone: string };
 /**
@@ -8,7 +9,15 @@ type Tag = { text: string; tone: string };
  * Extensible: add a matcher here (first match wins) for new event kinds — e.g. REVOKE, DELEGATE, VERIFY —
  * keyed on type, tool or title. Unknown events fall through to their raw type.
  */
+const vTone = (v?: string | null) => (v === "DENY" ? "text-deny" : v === "ESCALATE" ? "text-escalate" : "text-allow");
+const isPlan = (e: Ev) => e.type === "THOUGHT" && (/^Orchestrator:/.test(e.title) || Array.isArray(det(e).plan));
 const TAGS: { when: (e: Ev) => boolean; tag: (e: Ev) => Tag }[] = [
+  // Delegation, kill switch, merchant verification, passkey — keyed on tool, before the generic type matchers.
+  { when: (e) => e.tool === "delegate", tag: (e) => ({ text: "DELEGATE", tone: e.verdict === "DENY" ? "text-deny" : "text-ink" }) },
+  { when: (e) => e.tool === "revoke", tag: () => ({ text: "REVOKE", tone: "text-deny" }) },
+  { when: (e) => e.tool === "verify", tag: (e) => ({ text: "VERIFY", tone: e.verdict ? vTone(e.verdict) : "text-ink" }) },
+  { when: (e) => e.tool === "passkey", tag: () => ({ text: "PASSKEY", tone: "text-ink" }) },
+  { when: isPlan, tag: () => ({ text: "PLAN", tone: "text-ink" }) },
   { when: (e) => e.type === "THOUGHT", tag: (e) => ({ text: "AGENT", tone: det(e).hijacked ? "text-deny" : "text-ink" }) },
   { when: (e) => e.type === "TOOL_CALL" && e.tool === "propose_purchase", tag: () => ({ text: "PROPOSE", tone: "text-ink" }) },
   { when: (e) => e.type === "TOOL_CALL" && e.tool === "search_products", tag: () => ({ text: "SEARCH", tone: "text-muted" }) },
@@ -31,6 +40,8 @@ function tagOf(e: Ev): Tag {
 export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: number; closed: boolean }) {
   const tag = tagOf(e);
   const d = det(e);
+  const names = useNames();
+  const who = names && e.mandateId !== names.self ? names.byId[e.mandateId] : undefined;
   const quietThought = e.type === "THOUGHT" && e.title === "Thinking…" && !d.hijacked;
   return (
     <li
@@ -44,13 +55,24 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
       </time>
       <div className="pt-px">
         <span className={cn("label block pt-[3px] text-[10px]", tag.tone)}>{tag.text}</span>
+        {who && (
+          <span className="label mt-1 block truncate text-[9px] tracking-[0.06em] text-muted" title={`From ${who}`}>
+            <span aria-hidden>↳</span>
+            <span className="sr-only">from </span>
+            {shortName(who)}
+          </span>
+        )}
         <time dateTime={new Date(e.ts).toISOString()} className="mt-1 block text-[10px] text-muted sm:hidden">
           {hhmmss(e.ts)}
         </time>
       </div>
       <div className="min-w-0">
-        {e.type === "POLICY_VERDICT" ? (
+        {e.type === "POLICY_VERDICT" && e.tool === "delegate" ? (
+          <RefusedDelegation e={e} />
+        ) : e.type === "POLICY_VERDICT" ? (
           <VerdictBlock e={e} held={held} closed={closed} />
+        ) : isPlan(e) ? (
+          <PlanLine e={e} />
         ) : e.type === "THOUGHT" && d.hijacked ? (
           <Compromised e={e} />
         ) : quietThought ? (
@@ -69,8 +91,23 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
                 {e.title}
                 {n > 1 && <span className="ml-2 text-muted">×{n}</span>}
               </span>
-              {e.type === "TOOL_CALL" && e.amount != null && <span className="num shrink-0">{usd(e.amount)}</span>}
+              {(e.type === "TOOL_CALL" || e.tool === "delegate" || e.tool === "verify") && e.amount != null && <span className="num shrink-0">{usd(e.amount)}</span>}
             </p>
+            {e.tool === "verify" && d.receipt_sha256 && (
+              <p className="mt-0.5 text-[12px] text-muted">
+                receipt <span className="num text-ink">#{String(d.receipt_sha256).slice(0, 8)}</span>
+                {d.rule && <> · {String(d.rule)}</>} · Ed25519-signed for the merchant
+              </p>
+            )}
+            {e.tool === "delegate" && d.childId && (
+              <p className="mt-0.5 text-[12px] text-muted">
+                <a href={`/m/${d.childId}`} className="num text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                  № {String(d.childId)}
+                </a>
+                {d.sha256 && <> · signed <span className="num text-ink">#{String(d.sha256).slice(0, 8)}</span></>}
+                {d.attenuation === "passed" && <> · <span className="text-allow">✓</span> attenuation passed</>}
+              </p>
+            )}
             {Array.isArray(d.products) && d.products.length > 0 && <ResultsTable products={d.products as LogProduct[]} />}
           </>
         )}
@@ -80,6 +117,9 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
 }
 
 function lineTone(e: Ev) {
+  if (e.tool === "delegate" || e.tool === "passkey") return "text-ink";
+  if (e.tool === "revoke") return "text-ink";
+  if (e.tool === "verify") return e.verdict === "DENY" ? "text-deny" : "text-ink";
   if (e.type === "SYSTEM") return /red team|error/i.test(e.title) ? "text-deny" : "text-muted";
   if (e.type === "TOOL_RESULT" || e.type === "TOOL_CALL") return e.tool === "propose_purchase" ? "text-ink" : "text-muted";
   return "text-ink";
@@ -241,11 +281,102 @@ function VerdictBlock({ e, held, closed }: { e: Ev; held: number; closed: boolea
         </span>
         {e.amount != null && <span className="num shrink-0 text-ink">{usd(e.amount)}</span>}
       </div>
+      <ChainLine e={e} />
       {deny && (
         <p className="mt-1.5 text-[12px] text-muted">
           {attack ? "prompt injection — " : ""}cannot be overridden · $0.00 moved · {usd(held)} {closed ? "released" : "still held"}
         </p>
       )}
+    </div>
+  );
+}
+
+type ChainLevel = { mandateId: string; name?: string; verdict: string; rule?: string; message?: string };
+/** "checked at: Monitor ✓ · Your mandate !" — every purchase is checked at every level up to the root. */
+function ChainLine({ e }: { e: Ev }) {
+  const d = det(e);
+  const names = useNames();
+  const chain = (Array.isArray(d.chain) ? d.chain : []) as ChainLevel[];
+  if (chain.length < 2) return null;
+  const cap = (n: string) => `${n.charAt(0).toUpperCase()}${n.slice(1)}${/agent$/i.test(n) ? "" : " agent"}`;
+  const label = (c: ChainLevel, i: number) =>
+    i === chain.length - 1 ? "Your mandate" : names?.byId[c.mandateId] ?? (c.name ? cap(c.name) : c.mandateId);
+  const decider = chain.find((c) => c.mandateId === d.decidedBy);
+  return (
+    <p className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[12px] text-muted">
+      <span>checked at</span>
+      {chain.map((c, i) => (
+        <span key={`${c.mandateId}-${i}`} className="inline-flex items-baseline gap-1">
+          {i > 0 && <span aria-hidden className="text-line">→</span>}
+          <span className="text-ink">{label(c, i)}</span>
+          <span className={vTone(c.verdict)} aria-label={c.verdict}>{checkGlyph(c.verdict)}</span>
+        </span>
+      ))}
+      {decider && chain.length > 1 && <span>· decided by {label(decider, chain.indexOf(decider)).toLowerCase()}</span>}
+    </p>
+  );
+}
+
+type PlanItem = { name?: string; goal?: string; budget_total?: number; approval_threshold?: number | null };
+/** The orchestrator's plan: its words, then the split it intends to delegate as a small table. */
+function PlanLine({ e }: { e: Ev }) {
+  const d = det(e);
+  const plan = (Array.isArray(d.plan) ? d.plan : []) as PlanItem[];
+  const total = plan.reduce((a, p) => a + (p.budget_total ?? 0), 0);
+  return (
+    <div>
+      <p className="whitespace-pre-wrap font-sans text-[14px] leading-[1.55] text-ink">{e.title.replace(/^Orchestrator:\s*/, "")}</p>
+      {plan.length > 0 && (
+        <div role="table" aria-label="Delegation plan" className="mt-2 text-[12px]">
+          <div role="row" className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-x-2 border-b border-line py-1 sm:grid-cols-[minmax(0,1fr)_5.5rem_5.5rem]">
+            <span role="columnheader" className="label text-[9px] text-muted">Sub-mandate</span>
+            <span role="columnheader" className="label text-right text-[9px] text-muted">Up to</span>
+            <span role="columnheader" className="label hidden text-right text-[9px] text-muted sm:block">Ask above</span>
+          </div>
+          {plan.map((p, i) => (
+            <div key={i} role="row" className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-x-2 border-b border-line/60 py-1 sm:grid-cols-[minmax(0,1fr)_5.5rem_5.5rem]">
+              <span role="cell" className="truncate text-ink" title={p.goal}>{p.name}</span>
+              <span role="cell" className="num text-right text-ink">{usd(p.budget_total)}</span>
+              <span role="cell" className="num hidden text-right text-muted sm:block">{p.approval_threshold != null ? usd(p.approval_threshold) : "—"}</span>
+            </div>
+          ))}
+          <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-x-2 border-t border-ink py-1 sm:grid-cols-[minmax(0,1fr)_5.5rem_5.5rem]">
+            <span className="label pt-[2px] text-[9px] text-muted">To delegate</span>
+            <span className="num text-right font-medium text-ink">{usd(total)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** ATTENUATION · DENY: the orchestrator asked to delegate more than it holds. Each violation, then a stamp. */
+function RefusedDelegation({ e }: { e: Ev }) {
+  const d = det(e);
+  const violations = (Array.isArray(d.violations) ? d.violations : []) as { field?: string; message: string }[];
+  const req = (d.request ?? {}) as { budget_total?: number };
+  return (
+    <div>
+      <p className="text-muted">attenuation check · a sub-mandate must be narrower than its parent on every rule</p>
+      <ul className="mt-1.5 space-y-px">
+        {violations.map((v, i) => (
+          <li
+            key={i}
+            className="animate-ink grid grid-cols-[1.25ch_minmax(0,1fr)] gap-x-2 text-deny sm:grid-cols-[1.25ch_12ch_minmax(0,1fr)]"
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
+            <span aria-label="DENY">✗</span>
+            <span className="truncate font-medium uppercase">{v.field ?? "rule"}</span>
+            <span className="col-start-2 break-words sm:col-start-3">{v.message}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-dashed border-line pt-2">
+        <Stamp verdict="DENY" animate rotate={-3}>Refused</Stamp>
+        <span className="min-w-0 flex-1 basis-48 font-medium text-deny">{e.title}</span>
+        {(req.budget_total ?? e.amount) != null && <span className="num shrink-0 text-deny line-through">{usd(req.budget_total ?? e.amount)}</span>}
+      </div>
+      <p className="mt-1.5 text-[12px] text-muted">no sub-mandate signed · $0.00 delegated · the math, not a model, said no</p>
     </div>
   );
 }

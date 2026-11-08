@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { View } from "../mandate-screen";
 import { Button, SealTag, Stamp, cn, signatureOf, usd } from "../ui";
 import { CopyId, Thumb } from "./shared";
+import { useNames } from "../team/names";
 
 type Approval = View["approvals"][number];
 type Purchase = View["purchases"][number];
@@ -10,7 +11,8 @@ type Purchase = View["purchases"][number];
 /** The mandate's stub: signature, the PayPal hold, how long it's good for, AP2 export. */
 export function InstrumentStub({ mandate, authorized, held, closed }: { mandate: View["mandate"]; authorized: number; held: number; closed: boolean }) {
   const hash = signatureOf(mandate);
-  const expires = (mandate as { expiresAt?: string | Date | null }).expiresAt;
+  const mm = mandate as { expiresAt?: string | Date | null; signedWith?: string | null; passkeyIntentHash?: string | null; parentId?: string | null; rootId?: string | null };
+  const expires = mm.expiresAt;
   return (
     <section className="border border-line bg-surface" aria-label="Mandate instrument">
       <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
@@ -18,9 +20,44 @@ export function InstrumentStub({ mandate, authorized, held, closed }: { mandate:
         {hash ? <SealTag hash={hash} /> : <span className="label text-[10px] text-muted">Unsigned</span>}
       </div>
       <dl className="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-2.5 px-4 py-3 text-[12px]">
+        {hash && (
+          <>
+            <dt className="label pt-[3px] text-[10px] text-muted">Signed with</dt>
+            <dd className="num min-w-0 text-ink">
+              {mm.signedWith === "passkey" ? (
+                <>
+                  <span className="text-allow" aria-hidden>✓ </span>Passkey
+                  {mm.passkeyIntentHash && (
+                    <span className="text-muted">
+                      {" "}· intent <span className="text-ink" title={`sha256 ${mm.passkeyIntentHash}`}>#{mm.passkeyIntentHash.slice(0, 8)}</span>
+                    </span>
+                  )}
+                </>
+              ) : mm.parentId ? (
+                <span className="text-muted">Orchestrator, under your mandate</span>
+              ) : (
+                <span className="text-muted">PayPal approval</span>
+              )}
+            </dd>
+          </>
+        )}
+        {mm.parentId && (
+          <>
+            <dt className="label pt-[3px] text-[10px] text-muted">Parent</dt>
+            <dd className="num min-w-0 truncate">
+              <a href={`/m/${mm.parentId}`} className="text-ink underline decoration-line underline-offset-4 hover:decoration-ink">№ {mm.parentId}</a>
+            </dd>
+          </>
+        )}
         <dt className="label pt-[3px] text-[10px] text-muted">Authorization</dt>
         <dd className="min-w-0">
-          {mandate.authorizationId ? <CopyId value={mandate.authorizationId} label="PayPal authorization" /> : <span className="num text-muted">—</span>}
+          {mandate.authorizationId ? (
+            <CopyId value={mandate.authorizationId} label="PayPal authorization" />
+          ) : mm.parentId ? (
+            <span className="num text-muted">root PayPal hold</span>
+          ) : (
+            <span className="num text-muted">—</span>
+          )}
         </dd>
         <dt className="label pt-[3px] text-[10px] text-muted">Held</dt>
         <dd className="num text-paypal">
@@ -41,6 +78,13 @@ export function InstrumentStub({ mandate, authorized, held, closed }: { mandate:
           </>
         )}
       </dl>
+      <a
+        href={`/verify?mandate=${encodeURIComponent(mandate.id)}`}
+        className="flex min-h-11 items-center justify-between gap-2 border-t border-line px-4 text-[13px] text-ink hover:bg-surface-2"
+      >
+        <span>Verify an order as a merchant</span>
+        <span aria-hidden className="num">→</span>
+      </a>
     </section>
   );
 }
@@ -60,6 +104,8 @@ export function ApprovalSlip({ a, authorizationId, onDone }: { a: Approval; auth
   }
   const amount = a.product.price * a.quantity;
   const ev = a.evaluation as { rule?: string; message?: string };
+  const names = useNames();
+  const who = names && a.mandateId !== names.self ? names.byId[a.mandateId] : undefined;
   return (
     <section className="animate-ink border border-escalate bg-surface shadow-paper" aria-labelledby={`slip-${a.id}`}>
       <div className="perforation" aria-hidden />
@@ -68,6 +114,11 @@ export function ApprovalSlip({ a, authorizationId, onDone }: { a: Approval; auth
           <p id={`slip-${a.id}`} className="label text-[10px] text-escalate">Your signature required</p>
           <span className="label text-[10px] text-muted">Slip {a.id.slice(-6)}</span>
         </div>
+        {who && (
+          <p className="label mt-1.5 text-[10px] text-muted">
+            Asked by <span className="text-ink">{who}</span> · <span className="num normal-case tracking-normal">№ {a.mandateId}</span>
+          </p>
+        )}
 
         <div className="mt-3 flex gap-3">
           <Thumb src={a.product.image} size={64} />

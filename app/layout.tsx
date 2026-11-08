@@ -45,6 +45,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <p className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-muted">
                 An implementation of the Intent Mandate idea from AP2, enforced on real PayPal rails.
               </p>
+              <p className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-muted">
+                Merchant?{" "}
+                <Link href="/verify" className="text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                  Verify an agent&apos;s order before you ship →
+                </Link>
+              </p>
             </div>
           </div>
         </footer>

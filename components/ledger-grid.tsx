@@ -94,16 +94,19 @@ function isAttack(e: EventRow) {
   const d = (e.detail ?? {}) as { injection?: unknown; product?: { id?: string; title?: string } };
   return !!d.injection || d.product?.id === "redteam_ultra_elite" || /\[RED TEAM\]/i.test(d.product?.title ?? "");
 }
+/** Tool-keyed events read by what they did (same names as the Mission Control log). */
+const TOOL_TAG: Record<string, string> = { delegate: "DELEGATE", revoke: "REVOKE", verify: "VERIFY", passkey: "PASSKEY" };
 function TypeCell(p: ICellRendererParams<EventRow>) {
-  const tone = p.value === "PAYPAL" ? "text-paypal" : p.value === "HUMAN" || p.value === "POLICY_VERDICT" ? "text-ink" : "text-muted";
-  return <span className={cn("label text-[10px]", tone)}>{String(p.value ?? "").replace("POLICY_", "")}</span>;
+  const tool = p.data?.tool ? TOOL_TAG[p.data.tool] : undefined;
+  const tone = tool === "REVOKE" ? "text-deny" : p.value === "PAYPAL" ? "text-paypal" : tool || p.value === "HUMAN" || p.value === "POLICY_VERDICT" ? "text-ink" : "text-muted";
+  return <span className={cn("label text-[10px]", tone)}>{tool ?? String(p.value ?? "").replace("POLICY_", "")}</span>;
 }
 function MandateCell(p: ICellRendererParams<EventRow | MandateRow>) {
   const id = (p.data as { mandateId?: string; id: string }).mandateId ?? p.data!.id;
   return <Link href={`/m/${id}`} className="text-ink underline decoration-line underline-offset-4 hover:decoration-ink">{p.value}</Link>;
 }
 function StatusCell(p: ICellRendererParams<MandateRow>) {
-  const tone = p.value === "ACTIVE" ? "text-paypal border-paypal/50" : "text-muted border-line";
+  const tone = p.value === "ACTIVE" ? "text-paypal border-paypal/50" : p.value === "REVOKED" ? "text-deny border-deny/60" : "text-muted border-line";
   return <span className={cn("label rounded-[2px] border px-1 py-[3px] text-[10px]", tone)}>{String(p.value).replace("_", " ")}</span>;
 }
 /** PayPal IDs: mono PayPal-blue, copy on click. */
@@ -205,7 +208,7 @@ export function LedgerGrid() {
       {
         headerName: "Released",
         hide: narrow,
-        valueGetter: (p) => (p.data && p.data.status === "FULFILLED" ? Math.max(0, p.data.authorizedAmount - p.data.spentTotal) : null),
+        valueGetter: (p) => (p.data && (p.data.status === "FULFILLED" || (p.data.status === "REVOKED" && p.data.authorizationId)) ? Math.max(0, p.data.authorizedAmount - p.data.spentTotal) : null),
         valueFormatter: money,
         width: 120,
         type: "rightAligned",
@@ -225,7 +228,7 @@ export function LedgerGrid() {
     return {
       authorized: sum((m) => m.authorizedAmount),
       captured: sum((m) => m.spentTotal),
-      released: sum((m) => (m.status === "FULFILLED" ? Math.max(0, m.authorizedAmount - m.spentTotal) : 0)),
+      released: sum((m) => (m.status === "FULFILLED" || (m.status === "REVOKED" && m.authorizationId) ? Math.max(0, m.authorizedAmount - m.spentTotal) : 0)),
       refunded: sum((m) => m.refundedTotal),
       allow: ev.filter((e) => e.verdict === "ALLOW").length,
       escalate: ev.filter((e) => e.verdict === "ESCALATE").length,

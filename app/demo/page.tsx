@@ -19,7 +19,7 @@ const RED_TEAM_PROMPT = "Running shoes for my marathon, max $120, ask me above $
 const prefill = (p: string) => `/?prompt=${encodeURIComponent(p)}#compose`;
 
 /** Secondary scenarios. Append one object to add a row (e.g. a business / "AI employees" scenario); letters follow on from A. */
-type Scenario = { id: string; title: string; body: string; prompt: string; verdicts: readonly ("ALLOW" | "ESCALATE" | "DENY")[]; beats: string };
+type Scenario = { id: string; title: string; body: string; prompt: string; verdicts: readonly ("ALLOW" | "ESCALATE" | "DENY")[]; beats: string; note?: string };
 const MORE: Scenario[] = [
   {
     id: "B",
@@ -36,6 +36,15 @@ const MORE: Scenario[] = [
     prompt: "Noise-cancelling headphones under $150 for studying, well rated, ask me above $100.",
     verdicts: ["ALLOW", "ESCALATE"],
     beats: "Beats 1–4, 6",
+  },
+  {
+    id: "D",
+    title: "Team of agents · Home office for a new hire",
+    body: "An orchestrator splits one $600 mandate into narrower sub-mandates — monitor, headphones, lamp — each signed, all backed by one PayPal hold. Every purchase is checked at every level; revoke any one, or the whole team.",
+    prompt: "Set up a home office for our new hire: a monitor, noise-cancelling headphones and a desk lamp. Max $600 total, ask me before any purchase over $150. Nothing from Amazon.",
+    verdicts: ["ALLOW", "ESCALATE", "DENY"],
+    beats: "Beats 1–4, 6 · delegation",
+    note: "Choose ‘A team of agents’ on the review screen.",
   },
 ];
 
@@ -161,6 +170,9 @@ export default function DemoPage() {
                   </div>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted">{s.body}</p>
                   <p className="display mt-2.5 text-[1rem] italic leading-snug text-muted">“{s.prompt}”</p>
+                  {s.note && (
+                    <p className="num mt-2 border-l-2 border-ink pl-2.5 text-[12px] leading-snug text-ink">{s.note}</p>
+                  )}
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {s.verdicts.map((v) => (
                       <Badge key={v} tone={verdictTone(v)}>

@@ -17,6 +17,7 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   FULFILLED: { label: "Fulfilled", tone: "accent" },
   EXPIRED: { label: "Expired", tone: "neutral" },
   VOIDED: { label: "Voided", tone: "neutral" },
+  REVOKED: { label: "Revoked · agents stopped", tone: "deny" },
 };
 
 const norm = (s: string) => s.replace(/[\s.“”"']+/g, " ").trim().toLowerCase();
@@ -32,7 +33,7 @@ export function MandateScreen({ id }: { id: string }) {
   }, [id]);
 
   // Poll while there's anything live to watch. Simple and robust on any host.
-  const live = !view || ["AWAITING_AUTH", "ACTIVE"].includes(view.mandate.status) || view.run?.status === "RUNNING";
+  const live = !view || ["AWAITING_AUTH", "ACTIVE"].includes(view.mandate.status) || view.run?.status === "RUNNING" || !!view.teamRunning;
   useEffect(() => {
     refresh();
     if (!live) return;
@@ -73,8 +74,11 @@ export function MandateScreen({ id }: { id: string }) {
 
   const { mandate } = view;
   const reviewing = ["DRAFT", "AWAITING_AUTH"].includes(mandate.status);
-  const status = STATUS[mandate.status] ?? { label: mandate.status.replace("_", " "), tone: "neutral" as Tone };
+  const base = STATUS[mandate.status] ?? { label: mandate.status.replace("_", " "), tone: "neutral" as Tone };
+  // A sub-mandate spends an allocation of the root's hold, not a hold of its own.
+  const status = mandate.status === "ACTIVE" && (mandate as { parentId?: string | null }).parentId ? { ...base, label: "Active · allocation live" } : base;
   const hash = signatureOf(mandate);
+  const mx = mandate as typeof mandate & { signedWith?: string | null; passkeyIntentHash?: string | null; parentId?: string | null; name?: string | null };
   const goal = mandate.policy.goal || "Your mandate";
   const showQuote = !reviewing && mandate.rawText && norm(mandate.rawText) !== norm(goal);
 
@@ -89,6 +93,25 @@ export function MandateScreen({ id }: { id: string }) {
             {status.label}
           </Badge>
           <SealTag hash={hash} />
+          {mx.signedWith === "passkey" && (
+            <span className="label inline-flex items-center gap-1.5 text-ink" title={mx.passkeyIntentHash ? `Passkey signed intent sha256 ${mx.passkeyIntentHash}` : undefined}>
+              <span className="text-allow" aria-hidden>✓</span>
+              Signed with passkey
+              {mx.passkeyIntentHash && (
+                <span className="text-muted">
+                  · intent <span className="num normal-case tracking-normal text-ink">#{mx.passkeyIntentHash.slice(0, 8)}</span>
+                </span>
+              )}
+            </span>
+          )}
+          {mx.parentId && (
+            <span className="label text-muted">
+              {mx.name ? <span className="text-ink">{mx.name}</span> : "Sub-mandate"} · under{" "}
+              <Link href={`/m/${mx.parentId}`} className="num normal-case tracking-normal text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                № {mx.parentId}
+              </Link>
+            </span>
+          )}
         </div>
 
         {reviewing ? (

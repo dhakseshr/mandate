@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/demo", label: "Demo", match: (p: string) => p.startsWith("/demo") },
   { href: "/#compose", label: "Draft", match: (p: string) => p === "/" || p.startsWith("/m/") },
   { href: "/ledger", label: "Ledger", match: (p: string) => p.startsWith("/ledger") },
+  { href: "/verify", label: "Verify", match: (p: string) => p.startsWith("/verify") },
 ];
 
 export function SiteNav() {

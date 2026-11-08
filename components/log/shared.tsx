@@ -30,7 +30,7 @@ export function collapse(events: Ev[]) {
     const last = out[out.length - 1];
     const collapsible =
       e.type === "HUMAN" || e.type === "SYSTEM" || (e.type === "PAYPAL" && e.title.startsWith("Created PayPal order"));
-    const same = !!last && collapsible && last.e.type === e.type && last.e.title === e.title;
+    const same = !!last && collapsible && last.e.type === e.type && last.e.title === e.title && last.e.mandateId === e.mandateId;
     if (same) out[out.length - 1] = { e, n: last.n + 1 };
     else out.push({ e, n: 1 });
   }
