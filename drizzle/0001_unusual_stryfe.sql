@@ -1,0 +1,1 @@
+ALTER TABLE "mandates" ADD COLUMN "catalog" jsonb DEFAULT '{}'::jsonb NOT NULL;

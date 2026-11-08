@@ -20,6 +20,8 @@ export const mandates = pgTable("mandates", {
   refundedTotal: money("refunded_total").notNull().default(0),
   itemsBought: integer("items_bought").notNull().default(0),
   summary: text("summary"),
+  /** Products the agent has seen, keyed by id. Purchases must reference these — the model can't invent prices. */
+  catalog: jsonb("catalog").$type<Record<string, Product>>().notNull().default({}),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: createdAt(),
 });

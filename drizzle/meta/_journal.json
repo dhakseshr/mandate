@@ -8,6 +8,13 @@
       "when": 1794126423230,
       "tag": "0000_normal_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794128250899,
+      "tag": "0001_unusual_stryfe",
+      "breakpoints": true
     }
   ]
 }

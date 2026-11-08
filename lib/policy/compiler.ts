@@ -27,6 +27,7 @@ export async function compileMandate(text: string, today = new Date()): Promise<
     system: SYSTEM,
     prompt: `TODAY is ${today.toDateString()} (${today.toISOString().slice(0, 10)}).\n\nMandate:\n"""${text}"""`,
     temperature: 0,
+    maxRetries: 1, // resilient model wrapper handles capacity retries + failover
   });
   const policy = PolicySchema.parse(object);
   if (!policy.goal.trim()) policy.goal = text.trim().slice(0, 200);

@@ -1,6 +1,6 @@
 // Centralised, server-only environment access. Never import this from client components.
 function req(name: string): string {
-  const v = process.env[name];
+  const v = process.env[name]?.trim();
   if (!v) throw new Error(`Missing env var ${name} (see .env.example)`);
   return v;
 }

@@ -17,15 +17,6 @@ export async function createEnvelopeOrder(p: { mandateId: string; budget: number
           amount: money(p.budget),
         },
       ],
-      payment_source: {
-        paypal: {
-          experience_context: {
-            brand_name: "Mandate",
-            user_action: "CONTINUE",
-            shipping_preference: "NO_SHIPPING",
-          },
-        },
-      },
     },
     idempotencyKey: `envelope-${p.mandateId}`,
   });
