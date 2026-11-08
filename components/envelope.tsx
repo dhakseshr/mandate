@@ -1,13 +1,32 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Lock, Unlock } from "lucide-react";
-import { Badge, cn, usd } from "./ui";
+import { Stamp, cn, usd } from "./ui";
+
+export type EnvelopeProps = {
+  /** The PayPal authorization (hold) amount. */
+  authorized: number;
+  /** Total captured from the hold (before refunds). */
+  captured: number;
+  /** Refunded back out of what was captured. */
+  refunded?: number;
+  /** Mandate closed (FULFILLED / VOIDED): the unspent remainder has been voided and released. */
+  closed?: boolean;
+  /** Before PayPal approval: show what will be held. */
+  preview?: boolean;
+  /** Amount of a PENDING human approval; drawn as an amber outline inside the held part. */
+  pendingAmount?: number;
+  authorizationId?: string | null;
+  className?: string;
+};
+
+const REFUND_HATCH = {
+  backgroundImage: "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted) 55%, transparent) 0 1px, transparent 1px 6px)",
+} as const;
 
 /**
  * The budget envelope: one bar that always sums to the PayPal authorization.
- *   captured (spent, minus refunds) | refunded | still held  — or, once closed, released.
- * Widths animate ("pour") on mount and whenever money moves; the held segment fades
- * from PayPal stripes to green when the remainder is voided ("release").
+ *   captured (solid PayPal blue; refunded part hatched) | awaiting you (amber outline) | held (stripes)
+ *   — once closed, the held part collapses right-to-left and the remainder reads RELEASED.
  */
 export function Envelope({
   authorized,
@@ -15,18 +34,10 @@ export function Envelope({
   refunded = 0,
   closed = false,
   preview = false,
+  pendingAmount = 0,
   authorizationId,
   className,
-}: {
-  authorized: number;
-  captured: number;
-  refunded?: number;
-  closed?: boolean;
-  /** Before PayPal approval: show what will be held. */
-  preview?: boolean;
-  authorizationId?: string | null;
-  className?: string;
-}) {
+}: EnvelopeProps) {
   const [shown, setShown] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setShown(true));
@@ -34,62 +45,135 @@ export function Envelope({
   }, []);
 
   const auth = Math.max(0, authorized || 0);
-  const spent = Math.min(auth, Math.max(0, captured || 0));
+  const spent = preview ? 0 : Math.min(auth, Math.max(0, captured || 0));
   const back = Math.min(spent, Math.max(0, refunded || 0));
   const remaining = Math.max(0, auth - spent);
+  const pending = closed || preview ? 0 : Math.min(remaining, Math.max(0, pendingAmount || 0));
+  const held = closed ? 0 : remaining;
+  const released = closed ? remaining : 0;
   const pct = (v: number) => (auth && shown ? (v / auth) * 100 : 0);
-  const heldPct = preview ? (shown ? 100 : 0) : pct(remaining);
+  const spentPct = auth ? (spent / auth) * 100 : 0;
 
-  const headline = preview ? auth : remaining;
-  const headLabel = preview ? "will be held by PayPal" : closed ? "released back to you" : "still held by PayPal";
+  const sentence = preview
+    ? `PayPal will hold ${usd(auth)} once you sign. Nothing is captured until a purchase passes the policy engine.`
+    : closed
+      ? [
+          released > 0 ? `PayPal released ${usd(released)} of the hold back to you.` : "The full hold was captured; nothing was left to release.",
+          spent > 0 ? `${usd(spent)} was captured${back > 0 ? `, ${usd(back)} of it refunded` : ""}.` : "Nothing was captured.",
+        ].join(" ")
+      : [
+          `PayPal holds ${usd(held)} of ${usd(auth)}.`,
+          spent > 0 ? `${usd(spent)} captured${back > 0 ? `, ${usd(back)} refunded` : ""}.` : "Nothing captured yet; every capture must pass the policy engine.",
+          pending > 0 ? `${usd(pending)} is waiting for your approval.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+  const ease = "transition-[width] duration-[600ms] ease-[var(--ease-ink)]";
 
   return (
-    <div className={cn("rounded-2xl border border-line bg-surface p-5", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
-          {closed ? <Unlock size={13} /> : <Lock size={13} />} Budget envelope
-        </p>
-        <Badge tone={preview ? "accent" : closed ? "allow" : "escalate"}>
-          {preview ? "not yet held" : closed ? "hold voided" : "hold active"}
-        </Badge>
-      </div>
+    <section className={cn("@container border border-line bg-surface", className)} aria-label="Budget envelope">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3 sm:px-5">
+        <span className="label text-ink">Budget envelope</span>
+        {preview ? (
+          <span className="label text-muted">Not yet held</span>
+        ) : authorizationId ? (
+          <span className="label text-muted">
+            PayPal auth <span className="num normal-case tracking-normal text-paypal">{authorizationId}</span>
+          </span>
+        ) : null}
+      </header>
 
-      <p className={cn("num mt-3 text-4xl font-semibold sm:text-5xl", closed ? "text-allow" : "text-ink")}>{usd(headline)}</p>
-      <p className="mt-0.5 text-sm text-muted">
-        {headLabel}
-        {!preview && <> · of <span className="num text-ink">{usd(auth)}</span> authorized</>}
-      </p>
+      <div className="px-4 pb-4 pt-4 sm:px-5">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-4 @lg:grid-cols-4">
+          <Stat label={preview ? "To hold" : "Held"} value={preview ? auth : held} swatch={<span className="stripes block h-full w-full" />} strong={!closed} tone="navy" />
+          <Stat label="Captured" value={spent} swatch={<span className="block h-full w-full bg-paypal" />} tone="paypal" />
+          <Stat label="Released" value={released} swatch={<StrikeSwatch />} tone="paypal" strong={closed} />
+          <Stat label="Refunded" value={back} swatch={<span className="block h-full w-full" style={REFUND_HATCH} />} />
+        </dl>
 
-      <div
-        className="mt-4 flex h-5 overflow-hidden rounded-full bg-surface-2 ring-1 ring-inset ring-line"
-        role="img"
-        aria-label={`${usd(spent - back)} captured, ${usd(back)} refunded, ${usd(remaining)} ${closed ? "released" : "held"}`}
-      >
-        <div className="h-full bg-accent transition-[width] duration-1000 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ width: `${pct(spent - back)}%` }} />
-        <div className="h-full bg-allow/50 transition-[width] duration-1000 ease-out" style={{ width: `${pct(back)}%` }} />
-        <div className="relative h-full bg-allow/35 transition-[width] duration-1000 ease-out" style={{ width: `${heldPct}%` }}>
-          <div className={cn("stripes absolute inset-0 transition-opacity duration-1000", closed ? "opacity-0" : "opacity-100")} />
+        {/* The bar */}
+        <div className="relative mt-5">
+          <div
+            className="relative flex h-7 overflow-hidden border border-line bg-surface"
+            role="img"
+            aria-label={`${usd(spent)} captured (${usd(back)} refunded), ${usd(pending)} awaiting approval, ${usd(held)} held, ${usd(released)} released, of ${usd(auth)} authorized`}
+          >
+            {/* Released remainder: paper with a faint strike, revealed as the hold collapses. */}
+            {closed && released > 0 && (
+              <span className="absolute inset-y-0 right-0" style={{ left: `${spentPct}%` }} aria-hidden>
+                <span className="absolute inset-x-0 top-1/2 h-px bg-muted/50" />
+              </span>
+            )}
+            <span className={cn("relative h-full bg-paypal", ease)} style={{ width: `${pct(spent - back)}%` }} />
+            <span className={cn("relative h-full bg-surface", ease)} style={{ width: `${pct(back)}%`, ...REFUND_HATCH }} />
+            <span
+              className={cn("relative h-full shrink-0", pending > 0 && "border-2 border-escalate bg-escalate-soft", ease)}
+              style={{ width: `${pct(pending)}%` }}
+            />
+            <span className={cn("stripes relative h-full", ease)} style={{ width: `${preview ? (shown ? 100 : 0) : pct(held - pending)}%` }} />
+          </div>
+
+          {closed && released > 0 && (
+            <span className="pointer-events-none absolute -top-3 right-2 sm:right-4">
+              <Stamp verdict="VOID" size="md" animate rotate={-5} className="bg-surface/85 [animation-delay:520ms]">
+                VOID · RETURNED
+              </Stamp>
+            </span>
+          )}
         </div>
+
+        <div className="mt-1.5 flex justify-between gap-4 font-mono text-[11px] text-muted">
+          <span className="num">$0</span>
+          {pending > 0 && <span className="label text-escalate">Awaiting you {usd(pending)}</span>}
+          <span className="num">{usd(auth)} authorized</span>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-muted">{sentence}</p>
       </div>
-
-      <dl className="mt-4 grid grid-cols-3 gap-3">
-        <Stat dot="bg-accent" label="Captured" value={spent - back} />
-        <Stat dot={closed ? "bg-allow/60" : "stripes"} label={closed ? "Released" : preview ? "To hold" : "Still held"} value={preview ? auth : remaining} />
-        <Stat dot="bg-allow/50" label="Refunded" value={back} faint={back === 0} />
-      </dl>
-
-      {authorizationId && <p className="num mt-4 truncate text-[10px] text-faint">PayPal authorization {authorizationId}</p>}
-    </div>
+    </section>
   );
 }
 
-function Stat({ dot, label, value, faint }: { dot: string; label: string; value: number; faint?: boolean }) {
+function StrikeSwatch() {
+  return (
+    <span className="relative block h-full w-full bg-surface">
+      <span className="absolute inset-x-0 top-1/2 h-px bg-muted" />
+    </span>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  swatch,
+  tone,
+  strong,
+}: {
+  label: string;
+  value: number;
+  swatch: React.ReactNode;
+  tone?: "paypal" | "navy";
+  strong?: boolean;
+}) {
+  const zero = value === 0;
   return (
     <div className="min-w-0">
-      <dt className="flex items-center gap-1.5 text-[11px] text-muted">
-        <span className={cn("h-2.5 w-2.5 shrink-0 rounded-sm", dot)} /> {label}
+      <dt className="label flex items-center gap-2 text-muted">
+        <span className="inline-block h-3 w-3 shrink-0 overflow-hidden border border-line" aria-hidden>
+          {swatch}
+        </span>
+        {label}
       </dt>
-      <dd className={cn("num mt-0.5 truncate text-base font-semibold sm:text-lg", faint && "text-faint")}>{usd(value)}</dd>
+      <dd
+        className={cn(
+          "num mt-2 truncate font-medium leading-none",
+          strong ? "text-3xl @lg:text-4xl" : "text-2xl @lg:text-3xl",
+          zero ? "text-muted" : tone === "navy" ? "text-paypal-navy" : tone === "paypal" ? "text-paypal" : "text-ink",
+        )}
+      >
+        {usd(value)}
+      </dd>
     </div>
   );
 }

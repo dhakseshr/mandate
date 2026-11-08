@@ -4,14 +4,14 @@ export const metadata = { title: "Ledger · Mandate" };
 
 export default function LedgerPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wider text-faint">Audit ledger</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Every decision your agents made</h1>
-        <p className="mt-1 text-sm text-muted">
-          Each search, policy verdict, human approval and PayPal money movement — append-only and traceable to a PayPal ID.
+    <div className="space-y-8">
+      <header className="max-w-2xl">
+        <p className="label text-[10px] text-muted">Audit ledger · append-only · traceable to PayPal IDs</p>
+        <h1 className="display mt-3 text-5xl leading-none text-ink sm:text-6xl">The ledger.</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-muted">
+          Every search, verdict, approval and PayPal movement. Nothing is edited; nothing is deleted.
         </p>
-      </div>
+      </header>
       <LedgerGrid />
     </div>
   );

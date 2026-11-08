@@ -1,24 +1,25 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { FileQuestion, Loader2 } from "lucide-react";
 import type { MandateView } from "@/lib/ledger";
 import { PolicyReview } from "./policy-review";
 import { MissionControl } from "./mission-control";
-import { Badge, signatureOf, type Tone } from "./ui";
+import { Badge, SealTag, cn, signatureOf, type Tone } from "./ui";
 import { Ap2Seal } from "./ap2-seal";
 
 // Dates arrive as strings over JSON.
 export type View = MandateView;
 
-const STATUS_TONE: Record<string, Tone> = {
-  DRAFT: "neutral",
-  AWAITING_AUTH: "accent",
-  ACTIVE: "allow",
-  FULFILLED: "accent",
-  EXPIRED: "neutral",
-  VOIDED: "neutral",
+const STATUS: Record<string, { label: string; tone: Tone }> = {
+  DRAFT: { label: "Draft", tone: "neutral" },
+  AWAITING_AUTH: { label: "Awaiting signature", tone: "accent" },
+  ACTIVE: { label: "Active · hold live", tone: "paypal" },
+  FULFILLED: { label: "Fulfilled", tone: "accent" },
+  EXPIRED: { label: "Expired", tone: "neutral" },
+  VOIDED: { label: "Voided", tone: "neutral" },
 };
+
+const norm = (s: string) => s.replace(/[\s.“”"']+/g, " ").trim().toLowerCase();
 
 export function MandateScreen({ id }: { id: string }) {
   const [view, setView] = useState<View | null>(null);
@@ -41,50 +42,76 @@ export function MandateScreen({ id }: { id: string }) {
 
   if (error)
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-line bg-surface p-8 text-center">
-        <FileQuestion className="mx-auto text-faint" size={32} />
-        <p className="mt-3 font-semibold">We can&apos;t find that mandate</p>
-        <p className="mt-1 text-sm text-muted">It may have been created on another database. Start a fresh one, or browse past mandates in the ledger.</p>
-        <div className="mt-5 flex justify-center gap-2 text-sm">
-          <Link href="/demo" className="rounded-xl bg-accent px-4 py-2 font-medium text-white">Guided demo</Link>
-          <Link href="/ledger" className="rounded-xl border border-line px-4 py-2 font-medium">Ledger</Link>
+      <div className="mx-auto max-w-[560px] border border-line bg-surface">
+        <p className="label border-b border-line px-5 py-3 text-muted">
+          Mandate <span className="num normal-case tracking-normal text-ink">№ {id}</span>
+        </p>
+        <div className="px-5 py-6">
+          <h1 className="display text-3xl leading-tight">No mandate on file under this number.</h1>
+          <p className="mt-2 text-[15px] leading-relaxed text-muted">
+            It may have been drafted against another database. Draft a fresh one, or look it up in the ledger.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link href="/demo" className="inline-flex min-h-11 items-center rounded-[2px] bg-ink px-4 text-sm font-medium text-on-accent hover:bg-ink/90">
+              Run the guided demo
+            </Link>
+            <Link href="/ledger" className="inline-flex min-h-11 items-center rounded-[2px] border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink/40">
+              Open the ledger
+            </Link>
+          </div>
         </div>
-      </div>
-    );
-  if (!view)
-    return (
-      <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted">
-        <Loader2 className="animate-spin" size={16} /> Loading mandate…
       </div>
     );
 
+  if (!view)
+    return (
+      <p className="label flex items-center gap-2 py-24 text-muted" role="status">
+        Retrieving mandate <span className="num normal-case tracking-normal text-ink">№ {id}</span>
+        <span className="caret" />
+      </p>
+    );
+
   const { mandate } = view;
+  const reviewing = ["DRAFT", "AWAITING_AUTH"].includes(mandate.status);
+  const status = STATUS[mandate.status] ?? { label: mandate.status.replace("_", " "), tone: "neutral" as Tone };
+  const hash = signatureOf(mandate);
+  const goal = mandate.policy.goal || "Your mandate";
+  const showQuote = !reviewing && mandate.rawText && norm(mandate.rawText) !== norm(goal);
+
   return (
-    <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-line px-5 py-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-faint">
-            Mandate <span className="num ml-1 normal-case tracking-normal">№ {mandate.id}</span>
+    <div className={cn("space-y-8", reviewing && "mx-auto max-w-[800px]")}>
+      <header className="animate-ink border-b border-line pb-6">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="label text-muted">
+            Mandate <span className="num normal-case tracking-normal text-ink">№ {mandate.id}</span>
           </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <Ap2Seal id={mandate.id} hash={signatureOf(mandate)} />
-            <Badge tone={STATUS_TONE[mandate.status] ?? "neutral"} className="text-xs">
-              {mandate.status.replace("_", " ")}
-            </Badge>
+          <Badge tone={status.tone} className="border-[3px] border-double px-2 py-1">
+            {status.label}
+          </Badge>
+          <SealTag hash={hash} />
+        </div>
+
+        {reviewing ? (
+          <div className="mt-5">
+            <h1 className="display text-balance text-4xl leading-[1.05] sm:text-5xl">You are signing this.</h1>
+            <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-muted">
+              Read the clauses below. Click any one to amend it. Nothing moves until you approve the hold on PayPal.
+            </p>
           </div>
-        </div>
-        <div className="px-5 py-4">
-          <h1 className="text-balance text-xl font-semibold tracking-tight sm:text-2xl">{mandate.policy.goal || "Your mandate"}</h1>
-          {!["DRAFT", "AWAITING_AUTH"].includes(mandate.status) && (
-            <p className="mt-1.5 max-w-3xl border-l-2 border-accent/40 pl-3 text-sm text-muted">“{mandate.rawText}”</p>
-          )}
-        </div>
-      </div>
-      {["DRAFT", "AWAITING_AUTH"].includes(mandate.status) ? (
-        <PolicyReview view={view} onChange={refresh} />
-      ) : (
-        <MissionControl view={view} onChange={refresh} />
-      )}
+        ) : (
+          <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="min-w-0">
+              <h1 className="display text-balance text-3xl leading-[1.1] sm:text-4xl">{goal}</h1>
+              {showQuote && (
+                <p className="display mt-3 max-w-[70ch] text-pretty text-lg italic leading-snug text-muted">“{mandate.rawText}”</p>
+              )}
+            </div>
+            <Ap2Seal id={mandate.id} hash={hash} />
+          </div>
+        )}
+      </header>
+
+      {reviewing ? <PolicyReview view={view} onChange={refresh} /> : <MissionControl view={view} onChange={refresh} />}
     </div>
   );
 }

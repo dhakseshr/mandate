@@ -1,91 +1,98 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowDown, Bot, Lock, PenLine, PlayCircle, Plug, ScrollText, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Composer } from "@/components/composer";
 import { HeroSequence } from "@/components/hero-sequence";
+import { InstrumentHero } from "@/components/landing/instrument-hero";
+import { Lifecycle } from "@/components/landing/lifecycle";
 
-const STEPS = [
-  { icon: PenLine, title: "Write the rule", body: "Plain English becomes a strict policy: budget, when to ask you, deadlines, merchants to avoid." },
-  { icon: Lock, title: "PayPal holds the budget", body: "You authorize the cap once. The agent can only capture from that hold — never more." },
-  { icon: Bot, title: "The agent shops", body: "It searches real catalogs and explains its picks. Every purchase passes 13 deterministic checks — no AI in the loop." },
-  { icon: Undo2, title: "Leftovers come back", body: "When it's done, the unspent hold is voided. Every cent is in an append-only audit ledger." },
-];
-
-const TRUST = [
-  { icon: Lock, text: "Funds held by PayPal" },
-  { icon: ShieldCheck, text: "Rules enforced without AI" },
-  { icon: ScrollText, text: "Every cent audited" },
-];
+function SectionHead({ n, label, title, children }: { n: string; label: string; title: string; children?: React.ReactNode }) {
+  return (
+    <div className="min-w-0 lg:col-span-4">
+      <span className="label">
+        § {n} — {label}
+      </span>
+      <h2 className="display mt-4 text-[1.75rem] font-medium leading-[1.15] text-ink">{title}</h2>
+      {children && <div className="mt-3 max-w-sm text-[15px] leading-relaxed text-muted">{children}</div>}
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-5xl">
-      <section className="grid items-center gap-10 pb-10 pt-2 sm:pt-6 lg:grid-cols-[1.05fr_1fr]">
-        <div className="text-center lg:text-left">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-allow" /> A permission slip for AI shopping agents
+    <div className="min-w-0">
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 gap-12 pb-20 pt-2 sm:pt-6 lg:grid-cols-12 lg:gap-10 lg:pb-24">
+        <div className="min-w-0 lg:col-span-7 lg:pt-6">
+          <p className="label leading-relaxed">
+            Mandate / № 0001 — <span className="whitespace-nowrap">A permission slip for AI agents</span>
           </p>
-          <h1 className="text-balance text-[2.6rem] font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="display-xl mt-8 text-balance text-ink">
             Your AI can shop.
             <br />
-            <span className="text-accent">It can&apos;t overspend.</span>
+            <em className="italic">It can&rsquo;t overspend.</em>
           </h1>
-          <p className="mx-auto mt-5 max-w-lg text-pretty text-base text-muted sm:text-lg lg:mx-0">
-            Write the rule in plain English. PayPal holds the budget. A deterministic policy engine — not the AI — approves every cent.
+          <p className="mt-8 max-w-[34rem] text-pretty text-[17px] leading-[1.55] text-muted">
+            You write the rule. PayPal holds the budget. Thirteen deterministic checks — not a model — decide every cent.
           </p>
-          <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <Link href="/demo" className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
-              <PlayCircle size={18} /> Run the guided demo
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-7">
+            <Link
+              href="/demo#red-team"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[2px] bg-ink px-6 text-[15px] font-medium text-on-accent transition-colors duration-[120ms] hover:bg-ink/90"
+            >
+              Watch the attack fail <ArrowRight size={16} aria-hidden />
             </Link>
-            <a href="#compose" className="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 py-3 text-sm font-semibold transition hover:bg-surface-2">
-              Write your own mandate <ArrowDown size={16} />
+            <a href="#compose" className="inline-flex min-h-11 items-center justify-center text-[15px] text-ink underline decoration-line underline-offset-[6px] hover:decoration-ink sm:justify-start">
+              Draft a mandate
             </a>
           </div>
-          <Link href="/demo#mcp" className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-accent">
-            <Plug size={14} /> Or connect your own agent (MCP)
+          <Link href="/demo#mcp" className="mt-5 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-ink">
+            Connect your own agent (MCP) <ArrowRight size={14} aria-hidden />
           </Link>
-        </div>
-        <HeroSequence />
-      </section>
 
-      <ul className="grid gap-2 rounded-2xl border border-line bg-surface px-4 py-3 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-line">
-        {TRUST.map((t) => (
-          <li key={t.text} className="flex items-center justify-center gap-2 text-sm font-medium sm:px-3">
-            <t.icon size={16} className="shrink-0 text-allow" /> {t.text}
-          </li>
-        ))}
-      </ul>
-
-      <section className="mx-auto mt-14 max-w-3xl">
-        <h2 className="mb-1 text-xl font-semibold tracking-tight">Write a mandate</h2>
-        <p className="mb-4 text-sm text-muted">Say what to buy, your budget, and when the agent must ask you first. You&apos;ll review the compiled rules before any money is held.</p>
-        <Suspense fallback={<div className="h-48 rounded-2xl border border-line bg-surface" />}>
-          <Composer />
-        </Suspense>
-      </section>
-
-      <section className="mx-auto mt-14 max-w-3xl">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight">How it works</h2>
-        <ol className="grid gap-3 sm:grid-cols-2">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="flex gap-3 rounded-2xl border border-line bg-surface p-4">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-                <s.icon size={18} />
-              </span>
-              <div>
-                <p className="font-medium">
-                  <span className="num mr-1.5 text-faint">{i + 1}</span>
-                  {s.title}
-                </p>
-                <p className="mt-1 text-sm text-muted">{s.body}</p>
+          <dl className="mt-14 hidden max-w-[34rem] grid-cols-3 border-t border-line pt-4 lg:grid">
+            {[
+              ["Decided by", "13 rules, no model"],
+              ["Money held by", "PayPal"],
+              ["Signed with", "Ed25519"],
+            ].map(([k, v]) => (
+              <div key={k} className="min-w-0 pr-4">
+                <dt className="label">{k}</dt>
+                <dd className="mt-2 text-sm text-ink">{v}</dd>
               </div>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-6 text-center text-xs text-muted">
-          An implementation of the <span className="font-medium text-ink">Intent Mandate</span> idea from AP2, enforced on real PayPal rails.
-        </p>
-        <p className="mt-2 text-center text-xs text-faint">Built on PayPal Orders v2 · Agent Toolkit · JS SDK v6 · Channel3 · AG Grid</p>
+            ))}
+          </dl>
+        </div>
+
+        <div className="min-w-0 lg:col-span-5">
+          <InstrumentHero />
+          <HeroSequence />
+        </div>
+      </section>
+
+      {/* ── Lifecycle ────────────────────────────────────────────────────── */}
+      <section aria-labelledby="lifecycle" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
+        <SectionHead n="02" label="Lifecycle" title="One hold. Five entries.">
+          <p id="lifecycle">
+            The agent never touches your card. It can only ask to capture from a hold PayPal already placed — and the engine answers.
+          </p>
+        </SectionHead>
+        <div className="min-w-0 lg:col-span-8">
+          <Lifecycle />
+        </div>
+      </section>
+
+      {/* ── Compose ──────────────────────────────────────────────────────── */}
+      <section aria-labelledby="draft" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
+        <SectionHead n="03" label="Draft" title="Draft a mandate.">
+          <p id="draft">Say what to buy, your budget, and when the agent must ask you first.</p>
+          <p className="mt-3">You review the compiled rules before PayPal holds anything. Nothing is signed until you sign it.</p>
+        </SectionHead>
+        <div className="min-w-0 lg:col-span-8">
+          <Suspense fallback={<div className="h-[19rem] border border-line bg-surface" />}>
+            <Composer />
+          </Suspense>
+        </div>
       </section>
     </div>
   );

@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, ArrowRight, Loader2, Sparkles } from "lucide-react";
-import { Button, Card } from "./ui";
+import { ArrowRight } from "lucide-react";
+import { Button } from "./ui";
 
 const EXAMPLES = [
-  "Running shoes for my marathon, max $120, arrive by Saturday, ask me before spending over $80. Nothing from Amazon.",
-  "Noise-cancelling headphones under $150 for studying, well rated, ask me above $100.",
-  "A birthday gift for my mom who loves gardening, around $50, must arrive within 5 days.",
+  { label: "Marathon shoes, $120, ask above $80", text: "Running shoes for my marathon, max $120, arrive by Saturday, ask me before spending over $80. Nothing from Amazon." },
+  { label: "Headphones under $150", text: "Noise-cancelling headphones under $150 for studying, well rated, ask me above $100." },
+  { label: "A $50 gardening gift", text: "A birthday gift for my mom who loves gardening, around $50, must arrive within 5 days." },
+  { label: "Red team: a poisoned listing", text: "Running shoes for my marathon, max $120, ask me above $80. [red-team]" },
 ];
 
 export function Composer() {
@@ -48,16 +49,19 @@ export function Composer() {
 
   const ok = text.trim().length >= 5;
   return (
-    <Card id="compose" className="scroll-mt-24 overflow-hidden p-0">
-      <div className="flex items-center justify-between border-b border-dashed border-line px-4 py-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-faint">New mandate</span>
+    <div id="compose" className="min-w-0 scroll-mt-24 border border-line bg-surface">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3 sm:px-5">
+        <label htmlFor="mandate-text" className="label text-ink">
+          For — in your words
+        </label>
         {prefilled ? (
-          <span className="flex items-center gap-1 text-[11px] font-medium text-accent"><Sparkles size={12} /> Prefilled from the guided demo — review, then create</span>
+          <span className="label text-ink">Prefilled from the demo · read it, then compile</span>
         ) : (
-          <span className="hidden text-[11px] text-faint sm:inline">What · budget · when to ask you · what to avoid</span>
+          <span className="num text-xs text-muted">№ MDT-————</span>
         )}
       </div>
       <textarea
+        id="mandate-text"
         ref={box}
         value={text}
         onChange={(e) => {
@@ -66,39 +70,48 @@ export function Composer() {
         }}
         onKeyDown={(e) => e.key === "Enter" && (e.metaKey || e.ctrlKey) && ok && !busy && submit()}
         rows={4}
-        placeholder="e.g. “Running shoes for my marathon, max $120, ask me before spending over $40.”"
-        className="slip block w-full resize-none bg-transparent px-4 py-3 text-lg leading-7 outline-none placeholder:text-faint"
+        aria-describedby="mandate-hint"
+        placeholder="Running shoes for my marathon, max $120, ask me before spending over $80."
+        className="ruled ruled-field display block min-h-[120px] w-full resize-none bg-transparent px-4 pb-1 text-[1.25rem] italic text-ink outline-none placeholder:text-muted sm:px-5"
       />
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface-2/40 p-3">
-        <div className="flex min-w-0 flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex}
-              onClick={() => {
-                setText(ex);
-                setPrefilled(false);
-              }}
-              className="max-w-[15rem] truncate rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted hover:border-accent hover:text-accent"
-              title={ex}
-            >
-              {ex}
-            </button>
-          ))}
+      <p id="mandate-hint" className="label border-t border-line px-4 py-3 leading-relaxed text-muted sm:px-5">
+        What · budget · when to ask you · what to avoid
+        <span className="hidden sm:inline"> &nbsp;·&nbsp; ⌘/Ctrl + Enter to compile</span>
+      </p>
+      <div className="flex flex-col gap-4 border-t border-line px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
+        <div className="min-w-0">
+          <span className="label">Or start from</span>
+          <ul className="mt-1 flex flex-wrap gap-x-5">
+            {EXAMPLES.map((ex) => (
+              <li key={ex.label}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setText(ex.text);
+                    setPrefilled(false);
+                    setError(null);
+                  }}
+                  title={ex.text}
+                  className="inline-flex min-h-11 items-center text-sm text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                >
+                  {ex.label}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-        <Button onClick={submit} disabled={busy || !ok} className="w-full sm:w-auto">
-          {busy ? <Loader2 className="animate-spin" size={16} /> : <ArrowRight size={16} />}
-          {busy ? "Compiling policy…" : "Create mandate"}
+        <Button onClick={submit} disabled={busy || !ok} className="min-h-11 w-full shrink-0 sm:w-auto">
+          {busy ? "Compiling policy…" : "Compile policy"}
+          {!busy && <ArrowRight size={16} aria-hidden />}
         </Button>
       </div>
       {error && (
-        <div className="flex items-start gap-2 border-t border-deny/20 bg-deny-soft px-4 py-3 text-sm text-deny">
-          <AlertCircle size={16} className="mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium">{error}</p>
-            <p className="mt-0.5 text-xs text-muted">Try naming a product, a dollar budget, and when the agent should ask you — or pick an example above.</p>
-          </div>
+        <div role="alert" className="border-t border-deny/40 bg-deny-soft px-4 py-3 sm:px-5">
+          <span className="label text-deny">Could not compile</span>
+          <p className="mt-1.5 text-sm font-medium text-deny">{error}</p>
+          <p className="mt-1 text-sm text-muted">Name a product, a dollar budget, and when the agent should ask you — or start from an example above.</p>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

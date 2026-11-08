@@ -1,43 +1,84 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────────────────────
+   "The Signed Instrument" — paper for the human, terminal for the machine,
+   rubber stamps for verdicts. Ink is the brand. Color only carries meaning:
+   PayPal blue = real PayPal money states; green/amber/red = verdicts only.
+   ────────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --surface-2: #f1f3f9;
-  --border: #e3e6ef;
-  --ink: #0f1222;
-  --muted: #5d6478;
-  --faint: #9aa1b4;
-  --accent: #4338ca;
-  --accent-soft: #eef0ff;
-  --allow: #047857;
-  --allow-soft: #e7f7f0;
-  --escalate: #b45309;
-  --escalate-soft: #fff4e5;
-  --deny: #be123c;
-  --deny-soft: #ffeef1;
-  --paypal: #0070e0;
+  --bg: #f3f0e8;          /* paper desk */
+  --surface: #fbfaf6;     /* the instrument / cards */
+  --surface-2: #ece8de;   /* log well, table headers */
+  --border: #d8d2c4;      /* hairlines */
+  --rule: #e4dfd2;        /* ruled-paper texture */
+  --ink: #17150f;
+  --muted: #5c574c;       /* 6.3:1 on bg */
+  --faint: #8a8475;       /* decoration / >=18px only, never small body text */
+  --accent: #17150f;      /* primary actions are ink */
+  --accent-soft: #ece8de;
+  --on-accent: #fbfaf6;   /* text on ink buttons */
+  --allow: #1e6b47;
+  --allow-soft: #e3efe6;
+  --escalate: #9a5800;
+  --escalate-soft: #f6ebd6;
+  --deny: #b42318;
+  --deny-soft: #f8e4e0;
+  --paypal: #0059b8;      /* money states only */
+  --paypal-navy: #003087; /* the held amount */
+  --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(23 21 15 / 0.25);
+  --ease-ink: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-stamp: cubic-bezier(0.3, 1.6, 0.5, 1);
+  color-scheme: light;
 }
 
+/* Night terminal (not inverted paper). Applied by OS preference unless forced light, or when forced dark. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b0d16;
-    --surface: #131624;
-    --surface-2: #1a1e2f;
-    --border: #262b40;
-    --ink: #eceef6;
-    --muted: #a3a9be;
-    --faint: #6b7189;
-    --accent: #8b8cff;
-    --accent-soft: #1e1f3d;
-    --allow: #34d399;
-    --allow-soft: #0f2a22;
-    --escalate: #fbbf24;
-    --escalate-soft: #2e2410;
-    --deny: #fb7185;
-    --deny-soft: #34141d;
-    --paypal: #3b9bff;
+    --bg: #0e0e0c;
+    --surface: #171714;
+    --surface-2: #1d1d19;
+    --border: #2c2b26;
+    --rule: #1f1f1b;
+    --ink: #ede9df;
+    --muted: #a8a396;
+    --faint: #77736a;
+    --accent: #ede9df;
+    --accent-soft: #1d1d19;
+    --on-accent: #0e0e0c;
+    --allow: #5fc28e;
+    --allow-soft: #12251a;
+    --escalate: #e9a23b;
+    --escalate-soft: #2a1f0c;
+    --deny: #ff6f61;
+    --deny-soft: #2e1411;
+    --paypal: #5aa9ff;
+    --paypal-navy: #5aa9ff;
+    --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0c;
+  --surface: #171714;
+  --surface-2: #1d1d19;
+  --border: #2c2b26;
+  --rule: #1f1f1b;
+  --ink: #ede9df;
+  --muted: #a8a396;
+  --faint: #77736a;
+  --accent: #ede9df;
+  --accent-soft: #1d1d19;
+  --on-accent: #0e0e0c;
+  --allow: #5fc28e;
+  --allow-soft: #12251a;
+  --escalate: #e9a23b;
+  --escalate-soft: #2a1f0c;
+  --deny: #ff6f61;
+  --deny-soft: #2e1411;
+  --paypal: #5aa9ff;
+  --paypal-navy: #5aa9ff;
+  --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -45,11 +86,13 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-line: var(--border);
+  --color-rule: var(--rule);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-allow: var(--allow);
   --color-allow-soft: var(--allow-soft);
   --color-escalate: var(--escalate);
@@ -57,79 +100,93 @@
   --color-deny: var(--deny);
   --color-deny-soft: var(--deny-soft);
   --color-paypal: var(--paypal);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paypal-navy: var(--paypal-navy);
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --shadow-paper: var(--paper-shadow);
+  --ease-ink: var(--ease-ink);
+  --ease-stamp: var(--ease-stamp);
 }
 
 html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  overflow-x: hidden;
+  font-family: var(--font-plex-sans), ui-sans-serif, sans-serif;
+  font-feature-settings: "ss01";
 }
 
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+::selection { background: color-mix(in oklab, var(--paypal) 25%, transparent); }
+
+/* ── Type roles ─────────────────────────────────────────────────────────── */
+.display { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-optical-sizing: auto; }
+.label { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.6875rem; line-height: 1; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
 /* Money and IDs: monospace, tabular, never reflowing. */
-.num { font-family: var(--font-geist-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.num { font-family: var(--font-plex-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 
-/* Permission-slip paper: faint ruled texture + perforated edge. */
-.slip {
-  background-image: repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in oklab, var(--border) 45%, transparent) 27px 28px);
-}
+/* ── Paper ──────────────────────────────────────────────────────────────── */
+.ruled { background-image: repeating-linear-gradient(0deg, transparent 0 27px, var(--rule) 27px 28px); }
+.slip { background-image: repeating-linear-gradient(0deg, transparent 0 27px, var(--rule) 27px 28px); } /* legacy alias */
 .perforation {
   background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 4px);
   background-size: 14px 10px;
   background-repeat: repeat-x;
   height: 10px;
 }
-
-/* Diagonal stripes for "still held" money. */
+/* Cheque-style guilloche hairlines — only behind the amount on an instrument. */
+.guilloche {
+  background-image:
+    repeating-radial-gradient(circle at 0% 50%, transparent 0 7px, color-mix(in oklab, var(--paypal) 9%, transparent) 7px 8px),
+    repeating-radial-gradient(circle at 100% 50%, transparent 0 9px, color-mix(in oklab, var(--paypal) 7%, transparent) 9px 10px);
+}
+/* "Still held" money: PayPal-blue hatching. */
 .stripes {
-  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--paypal) 28%, transparent) 0 6px, color-mix(in oklab, var(--paypal) 14%, transparent) 6px 12px);
+  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--paypal) 30%, transparent) 0 6px, color-mix(in oklab, var(--paypal) 12%, transparent) 6px 12px);
 }
 
-@keyframes rise {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+/* ── The only four animated moments ─────────────────────────────────────── */
+/* 1. Log lines ink in (stagger with style={{ animationDelay }}, ~40ms per line). */
+@keyframes ink-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+.animate-ink { animation: ink-in 240ms var(--ease-ink) both; }
+/* 2. A verdict stamp lands. Rotation is set on the element via --stamp-rot. */
+@keyframes stamp-land {
+  0% { opacity: 0; transform: rotate(var(--stamp-rot, -4deg)) scale(1.6); }
+  100% { opacity: 1; transform: rotate(var(--stamp-rot, -4deg)) scale(1); }
 }
-.animate-rise { animation: rise 0.35s ease-out both; }
+.animate-stamp { animation: stamp-land 220ms var(--ease-stamp) both; }
+@keyframes impression { from { background-color: var(--deny-soft); } to { background-color: var(--surface); } }
+.animate-impression { animation: impression 400ms var(--ease-ink) 200ms both; }
+/* 3. The hold releases (void): animate width with transition-[width] duration-[600ms] ease-[var(--ease-ink)]. */
+/* 4. First-load instrument draw-in: use .animate-ink with a 60ms stagger. */
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-.animate-pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+/* Legacy names kept as no-ops so nothing breaks mid-redesign (do not use in new code). */
+.animate-rise, .animate-pop, .animate-shake, .animate-ring, .animate-pulse-dot { animation: none; }
 
-@keyframes shake {
-  0%, 100% { transform: none; }
-  15% { transform: translateX(-6px); }
-  30% { transform: translateX(6px); }
-  45% { transform: translateX(-4px); }
-  60% { transform: translateX(4px); }
-  75% { transform: translateX(-2px); }
-}
-.animate-shake { animation: shake 0.5s ease-in-out both, rise 0.35s ease-out both; }
-
-@keyframes pop {
-  0% { opacity: 0; transform: scale(0.85); }
-  60% { opacity: 1; transform: scale(1.04); }
-  100% { opacity: 1; transform: none; }
-}
-.animate-pop { animation: pop 0.4s cubic-bezier(.2,.9,.3,1.2) both; }
-
+/* Live caret for the typed mandate on the landing instrument. */
 @keyframes caret { 50% { opacity: 0; } }
-.caret { display: inline-block; width: 2px; height: 1.1em; vertical-align: -0.15em; background: var(--accent); animation: caret 1s steps(1) infinite; }
-
-@keyframes ring-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--escalate) 45%, transparent); }
-  100% { box-shadow: 0 0 0 14px transparent; }
-}
-.animate-ring { animation: ring-pulse 1.6s ease-out infinite; }
+.caret { display: inline-block; width: 1px; height: 1.05em; vertical-align: -0.15em; background: var(--ink); animation: caret 1s steps(1) infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 120ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
+  .animate-stamp { animation-name: ink-in !important; transform: rotate(var(--stamp-rot, -4deg)); }
 }
+
+/* === Agent A additions === */
+/* Hero display size (spec: clamp(3rem,7vw,5.5rem)/0.95, -0.025em). Capped by column width on large screens. */
+.display-xl { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; font-size: clamp(2.75rem, 6.4vw, 5.5rem); line-height: 0.95; letter-spacing: -0.025em; font-optical-sizing: auto; }
+/* Ruled field: text sits on the 28px rules of .ruled. */
+.ruled-field { line-height: 28px; padding-top: 4px; background-position: 0 4px; }
+/* MICR-style footer band on an instrument. */
+.micr { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.18em; font-variant-numeric: tabular-nums; }
+/* Small caps line for amounts in words. */
+.words { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.6875rem; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+/* Double rule under totals (bank statement). */
+.rule-double { border-bottom: 3px double var(--ink); }
+/* === end Agent A === */

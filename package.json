@@ -18,6 +18,8 @@
     "@ai-sdk/openai-compatible": "^3.0.87",
     "@paypal/agent-toolkit": "^1.11.0",
     "@paypal/react-paypal-js": "^10.6.1",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.3",
     "ag-grid-community": "^36.3.0",
     "ag-grid-react": "^36.3.0",
     "ai": "^7.0.165",

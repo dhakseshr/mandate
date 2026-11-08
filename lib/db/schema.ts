@@ -27,7 +27,20 @@ export const mandates = pgTable("mandates", {
   signature: text("signature"),
   signingPublicKey: text("signing_public_key"),
   signedAt: timestamp("signed_at", { withTimezone: true }),
-  /** "builtin" = Mandate's own agent shops; "external" = any agent connects over MCP with agentToken. */
+  /** Delegation tree: a sub-mandate is always narrower than its parent and draws on the ROOT's PayPal hold. */
+  parentId: text("parent_id"),
+  rootId: text("root_id"),
+  /** Short role name for sub-mandates, e.g. "Monitor agent". */
+  name: text("name"),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  /** Human signature: a WebAuthn assertion whose challenge IS the sha256 of the intent document. */
+  signedWith: text("signed_with"), // "passkey" | null
+  passkeyCredentialId: text("passkey_credential_id"),
+  passkeyIntentHash: text("passkey_intent_hash"),
+  passkeyAssertion: jsonb("passkey_assertion"),
+  passkeyChallenge: text("passkey_challenge"), // pending registration challenge
+  /** "builtin" = Mandate's own agent shops; "external" = any agent connects over MCP with agentToken;
+   *  "team" = an orchestrator splits the mandate into sub-mandates, each shopped by its own agent. */
   agentMode: text("agent_mode").notNull().default("builtin"),
   /** Bearer token scoping an external (MCP) agent to exactly this mandate. Issued at authorization. */
   agentToken: text("agent_token").unique(),
@@ -98,6 +111,15 @@ export const approvals = pgTable("approvals", {
   // PENDING | APPROVED | REJECTED
   status: text("status").notNull().default("PENDING"),
   decidedAt: timestamp("decided_at", { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
+/** WebAuthn credentials (passkeys) used to sign mandates. No accounts: a passkey IS the signer. */
+export const passkeys = pgTable("passkeys", {
+  id: text("id").primaryKey(), // credential id (base64url)
+  publicKey: text("public_key").notNull(), // COSE public key, base64url
+  counter: integer("counter").notNull().default(0),
+  transports: jsonb("transports").$type<string[]>(),
   createdAt: createdAt(),
 });
 

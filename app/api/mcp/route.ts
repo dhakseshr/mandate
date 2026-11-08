@@ -7,7 +7,9 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getMandate, logEvent, type Mandate } from "@/lib/ledger";
+import { getChain, getMandate, logEvent, type Mandate } from "@/lib/ledger";
+import { createSubMandate } from "@/lib/delegation";
+import { revokeMandate } from "@/lib/purchase";
 import { makeTools, type RunCtx } from "@/lib/agent/tools";
 
 export const runtime = "nodejs";
@@ -60,6 +62,29 @@ const TOOLS = [
     name: "get_status",
     description: "Budget, purchases, and the status of any purchases waiting for the human's approval.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "delegate",
+    description:
+      "Hand a sub-agent a sub-mandate carved from yours. It can only be NARROWER (less money, lower approval line, fewer items, same or more blocks); anything wider is rejected. Returns a token the sub-agent uses to connect to this same MCP server.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Sub-agent role, e.g. 'Monitor agent'" },
+        goal: { type: "string" },
+        search_query: { type: "string" },
+        budget_total: { type: "number" },
+        approval_threshold: { type: "number" },
+        max_items: { type: "integer", minimum: 1 },
+      },
+      required: ["name", "goal", "search_query", "budget_total"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "revoke_sub_mandate",
+    description: "Kill switch for a sub-agent you delegated to: revokes its sub-mandate (and its descendants) immediately.",
+    inputSchema: { type: "object", properties: { mandate_id: { type: "string" }, reason: { type: "string" } }, required: ["mandate_id"], additionalProperties: false },
   },
   {
     name: "finish",
@@ -131,6 +156,37 @@ async function callTool(m: Mandate, name: string, args: Record<string, any>) {
         { product_id: String(args.product_id), quantity: Number(args.quantity ?? 1), rationale: String(args.rationale ?? "") },
         opts,
       );
+    case "delegate": {
+      const r = await createSubMandate(
+        m.id,
+        {
+          name: String(args.name),
+          goal: String(args.goal),
+          search_query: String(args.search_query),
+          budget_total: Number(args.budget_total),
+          approval_threshold: args.approval_threshold != null ? Number(args.approval_threshold) : null,
+          max_items: Number(args.max_items ?? 1),
+          agentMode: "external",
+        },
+        "agent",
+      );
+      if (!r.ok) return { delegated: false, rejected_by: "attenuation", violations: r.violations };
+      return {
+        delegated: true,
+        sub_mandate_id: r.mandateId,
+        budget: r.budget,
+        signed_sha256: r.signatureHash,
+        connect: { mcp_url_path: `/api/mcp?token=${r.agentToken}`, note: "Give this to the sub-agent. It only works within the sub-mandate." },
+      };
+    }
+    case "revoke_sub_mandate": {
+      const target = await getMandate(String(args.mandate_id));
+      const chain = target ? await getChain(target) : [];
+      if (!target || !chain.slice(1).some((c) => c.id === m.id))
+        return { error: "You can only revoke sub-mandates you (or your sub-agents) delegated." };
+      const ids = await revokeMandate(target.id, String(args.reason ?? "Revoked by the delegating agent"));
+      return { revoked: ids };
+    }
     case "finish":
       return tools.finish.execute!({ summary: String(args.summary ?? "") }, opts);
     default:

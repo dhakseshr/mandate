@@ -31,7 +31,10 @@ export function canonical(v: unknown): string {
 }
 
 /** AP2 IntentMandate (human-not-present) + the enforceable policy + the PayPal hold that backs it. */
-export function mandateDocument(m: Pick<Mandate, "id" | "rawText" | "policy" | "authorizationId" | "authorizedAmount" | "expiresAt">) {
+export function mandateDocument(
+  m: Pick<Mandate, "id" | "rawText" | "policy" | "authorizationId" | "authorizedAmount" | "expiresAt"> &
+    Partial<Pick<Mandate, "signedWith" | "passkeyIntentHash" | "passkeyCredentialId">>,
+) {
   const p = m.policy;
   return {
     "ap2.mandates.IntentMandate": {
@@ -51,6 +54,10 @@ export function mandateDocument(m: Pick<Mandate, "id" | "rawText" | "policy" | "
       amount: { currency_code: "USD", value: m.authorizedAmount.toFixed(2) },
     },
     "mandate.id": m.id,
+    // The human's own signature (WebAuthn assertion over sha256 of the intent document), if present.
+    ...(m.signedWith === "passkey"
+      ? { "mandate.user_signature": { type: "webauthn", intent_sha256: m.passkeyIntentHash, credential_id: m.passkeyCredentialId } }
+      : {}),
   };
 }
 

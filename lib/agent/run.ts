@@ -73,11 +73,14 @@ export async function runAgent(mandateId: string, note?: string) {
       toolCallConcurrency: 1,
       temperature: 0.2,
       maxRetries: 1, // retries/failover are handled in the resilient model wrapper
-      stopWhen: [stepCountIs(14), hasToolCall("finish"), () => ctx.waitingApproval],
+      stopWhen: [stepCountIs(14), hasToolCall("finish"), () => ctx.waitingApproval, () => !!ctx.halted],
       onStepStart: () => {
         stepStart = new Date();
       },
       onStepFinish: async (step) => {
+        // Kill switch: if the mandate was revoked mid-run, stop after this step.
+        const live = await getMandate(mandateId);
+        if (live?.status !== "ACTIVE") ctx.halted = true;
         // Checkpoint after every step: if a later step fails, Resume continues from here
         // instead of replaying tools (so a purchase can never be repeated by a retry).
         await db
@@ -104,6 +107,8 @@ export async function runAgent(mandateId: string, note?: string) {
 
     if (ctx.waitingApproval) {
       await logEvent({ mandateId, runId, type: "HUMAN", title: "Waiting for your approval" });
+    } else if (ctx.halted) {
+      await logEvent({ mandateId, runId, type: "SYSTEM", title: "Agent halted — the mandate is no longer active" });
     } else if (!ctx.finished) {
       // Model stopped without calling finish (step cap / gave up) — close safely.
       await closeMandate(mandateId, result.text?.trim() || "Agent stopped without completing the mandate. Unspent funds released.", runId);

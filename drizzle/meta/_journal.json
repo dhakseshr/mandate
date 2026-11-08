@@ -29,6 +29,20 @@
       "when": 1794140050592,
       "tag": "0003_brainy_krista_starr",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794142579092,
+      "tag": "0004_awesome_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794144031089,
+      "tag": "0005_reflective_fallen_one",
+      "breakpoints": true
     }
   ]
 }

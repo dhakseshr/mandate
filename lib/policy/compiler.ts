@@ -2,6 +2,7 @@
 import { generateText, Output } from "ai";
 import { model } from "@/lib/ai/provider";
 import { PolicySchema, type Policy } from "./schema";
+import { crossCheck } from "./crosscheck";
 
 const SYSTEM = `You compile a person's shopping instruction ("mandate") into a strict spending policy
 for an AI purchasing agent. The policy will be enforced by code and backed by a PayPal payment
@@ -29,7 +30,9 @@ export async function compileMandate(text: string, today = new Date()): Promise<
     temperature: 0,
     maxRetries: 1, // resilient model wrapper handles capacity retries + failover
   });
-  const policy = PolicySchema.parse(object);
-  if (!policy.goal.trim()) policy.goal = text.trim().slice(0, 200);
-  return policy;
+  const compiled = PolicySchema.parse(object);
+  if (!compiled.goal.trim()) compiled.goal = text.trim().slice(0, 200);
+  // The model interprets; deterministic code double-checks it against your literal words.
+  const { policy, fixes } = crossCheck(text, compiled);
+  return PolicySchema.parse({ ...policy, cross_check_fixes: fixes });
 }

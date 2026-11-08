@@ -13,6 +13,8 @@ export interface RunCtx {
   /** Set when a purchase is escalated: the loop stops and waits for the human. */
   waitingApproval: boolean;
   finished: boolean;
+  /** Set when the mandate stops being ACTIVE mid-run (e.g. the kill switch). The loop halts. */
+  halted?: boolean;
 }
 
 const compact = (p: Product) => ({

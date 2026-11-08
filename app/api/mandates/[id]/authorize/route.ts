@@ -7,6 +7,7 @@ import { getMandate, logEvent } from "@/lib/ledger";
 import { authorizeEnvelope } from "@/lib/paypal/envelope";
 import { startAgentInBackground } from "@/lib/agent/run";
 import { mandateDocument, signMandate } from "@/lib/signing";
+import { planTeam } from "@/lib/delegation";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         title: "Waiting for your AI agent to connect over MCP",
         detail: { mcp_endpoint: "/api/mcp" },
       });
+    } else if (m.agentMode === "team") {
+      // Orchestrator splits the mandate into attenuated sub-mandates; each specialist agent shops in parallel.
+      void planTeam(id)
+        .then((results) => results.forEach((r) => r.ok && startAgentInBackground(r.mandateId)))
+        .catch(async (e) => {
+          console.error("[team]", e);
+          await logEvent({ mandateId: id, type: "SYSTEM", title: "Orchestrator failed to plan the team — press Resume to retry" });
+        });
     } else {
       startAgentInBackground(id);
     }

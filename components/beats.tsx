@@ -1,29 +1,51 @@
-import { Check } from "lucide-react";
 import { cn } from "./ui";
 
-/** Slim horizontal progress stepper. `current` = index of the active beat; anything before it is done. */
+/**
+ * Thin mono step rail. `current` = index of the active step (-1 = none, all done per flags);
+ * anything before it is done unless `done` flags are given. `tone` colors the current step
+ * (escalate = waiting on you, deny = attack step).
+ */
 export function Beats({
-  steps, current, done: doneFlags, tone = "accent", className,
-}: { steps: string[]; current: number; done?: boolean[]; tone?: "accent" | "escalate" | "deny"; className?: string }) {
+  steps,
+  current,
+  done: doneFlags,
+  tone = "accent",
+  className,
+}: {
+  steps: string[];
+  current: number;
+  done?: boolean[];
+  tone?: "accent" | "escalate" | "deny";
+  className?: string;
+}) {
+  const toneText = tone === "escalate" ? "text-escalate" : tone === "deny" ? "text-deny" : "text-ink";
+  const toneRule = tone === "escalate" ? "border-escalate" : tone === "deny" ? "border-deny" : "border-ink";
   return (
-    <ol className={cn("flex items-center gap-1.5 overflow-hidden", className)} aria-label="Progress">
+    <ol className={cn("flex w-full gap-px", className)} aria-label="Progress">
       {steps.map((s, i) => {
         const active = i === current;
         const done = !active && (doneFlags ? !!doneFlags[i] : i < current);
+        const isAttack = /attack/i.test(s);
+        // With nothing current (all done), the last step keeps its label on small screens.
+        const labelled = active || (current < 0 && i === steps.length - 1);
         return (
-          <li key={s} className={cn("flex min-w-0 items-center gap-1.5", active ? "flex-[2_1_0%]" : "flex-1")} aria-current={active ? "step" : undefined}>
-            <span
-              className={cn(
-                "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold transition-colors",
-                done && "bg-allow text-white",
-                active && (tone === "escalate" ? "bg-escalate text-white animate-ring" : tone === "deny" ? "bg-deny text-white" : "bg-accent text-white"),
-                !done && !active && "bg-surface-2 text-faint ring-1 ring-inset ring-line",
-              )}
-            >
-              {done ? <Check size={13} strokeWidth={3} /> : i + 1}
+          <li
+            key={s}
+            aria-current={active ? "step" : undefined}
+            className={cn(
+              "relative min-w-0 border-t pt-2",
+              active ? cn("flex-[2.4_1_0%] border-t-2", toneRule) : "flex-1",
+              done && (isAttack ? "border-deny/60" : "border-ink/40"),
+              !done && !active && "border-line",
+            )}
+          >
+            <span className={cn("label flex items-baseline gap-1.5 whitespace-nowrap", active ? toneText : done && isAttack ? "text-deny" : "text-muted")}>
+              <span className="num tracking-normal">{done ? "✓" : String(i + 1).padStart(2, "0")}</span>
+              <span className={cn("truncate", !labelled && "max-md:sr-only max-md:left-0 max-md:top-0")}>
+                {s}
+                <span className="sr-only left-0 top-0">{done ? " — done" : active ? " — current" : " — upcoming"}</span>
+              </span>
             </span>
-            <span className={cn("truncate text-xs", active ? "font-semibold text-ink" : done ? "text-muted" : "text-faint", !active && "hidden sm:inline")}>{s}</span>
-            {i < steps.length - 1 && <span className={cn("h-px min-w-3 flex-1", done ? "bg-allow" : "bg-line")} />}
           </li>
         );
       })}
