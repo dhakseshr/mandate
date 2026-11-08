@@ -5,6 +5,7 @@ import { Composer } from "@/components/composer";
 import { HeroSequence } from "@/components/hero-sequence";
 import { InstrumentHero } from "@/components/landing/instrument-hero";
 import { Lifecycle } from "@/components/landing/lifecycle";
+import { Audience, Differentiators } from "@/components/landing/positioning";
 
 function SectionHead({ n, label, title, children }: { n: string; label: string; title: string; children?: React.ReactNode }) {
   return (
@@ -25,7 +26,7 @@ export default function Home() {
       <section className="grid grid-cols-1 gap-12 pb-20 pt-2 sm:pt-6 lg:grid-cols-12 lg:gap-10 lg:pb-24">
         <div className="min-w-0 lg:col-span-7 lg:pt-6">
           <p className="label leading-relaxed">
-            Mandate / № 0001 — <span className="whitespace-nowrap">A permission slip for AI agents</span>
+            Writ / № 0001 — <span className="sm:whitespace-nowrap">The financial permission layer for autonomous AI</span>
           </p>
           <h1 className="display-xl mt-8 text-balance text-ink">
             Your AI can shop.
@@ -33,7 +34,10 @@ export default function Home() {
             <em className="italic">It can&rsquo;t overspend.</em>
           </h1>
           <p className="mt-8 max-w-[34rem] text-pretty text-[17px] leading-[1.55] text-muted">
-            You write the rule. PayPal holds the budget. Thirteen deterministic checks — not a model — decide every cent.
+            AI decides what to buy. Writ decides whether it&rsquo;s allowed to spend. PayPal enforces the boundary.
+          </p>
+          <p className="mt-3 max-w-[34rem] text-pretty text-[15px] leading-[1.55] text-ink">
+            We don&rsquo;t trust the AI. We trust the enforcement boundary — thirteen deterministic checks against a real PayPal hold.
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-7">
             <Link
@@ -70,9 +74,29 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Who it's for ───────────────────────────────────────────────── */}
+      <section aria-labelledby="audience" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
+        <SectionHead n="02" label="Who it’s for" title="Bounded budgets for agents that spend.">
+          <p id="audience">Companies hand AI procurement agents delegated authority. Writ makes that authority a signed, finite instrument.</p>
+        </SectionHead>
+        <div className="min-w-0 lg:col-span-8">
+          <Audience />
+        </div>
+      </section>
+
+      {/* ── Differentiators ─────────────────────────────────────────────── */}
+      <section aria-labelledby="boundary" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
+        <SectionHead n="03" label="The boundary" title="We don’t trust the AI. We trust the boundary.">
+          <p id="boundary">Five properties, each enforced outside the model and each leaving a record you can check.</p>
+        </SectionHead>
+        <div className="min-w-0 lg:col-span-8">
+          <Differentiators />
+        </div>
+      </section>
+
       {/* ── Lifecycle ────────────────────────────────────────────────────── */}
       <section aria-labelledby="lifecycle" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
-        <SectionHead n="02" label="Lifecycle" title="One hold. Five entries.">
+        <SectionHead n="04" label="Lifecycle" title="One hold. Five entries.">
           <p id="lifecycle">
             The agent never touches your card. It can only ask to capture from a hold PayPal already placed — and the engine answers.
           </p>
@@ -84,7 +108,7 @@ export default function Home() {
 
       {/* ── Compose ──────────────────────────────────────────────────────── */}
       <section aria-labelledby="draft" className="grid grid-cols-1 gap-8 border-t border-line py-20 lg:grid-cols-12 lg:gap-10 lg:py-24">
-        <SectionHead n="03" label="Draft" title="Draft a mandate.">
+        <SectionHead n="05" label="Draft" title="Draft a mandate.">
           <p id="draft">Say what to buy, your budget, and when the agent must ask you first.</p>
           <p className="mt-3">You review the compiled rules before PayPal holds anything. Nothing is signed until you sign it.</p>
         </SectionHead>

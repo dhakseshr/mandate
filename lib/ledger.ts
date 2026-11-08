@@ -130,6 +130,14 @@ export async function getDescendants(id: string): Promise<Mandate[]> {
   return out;
 }
 
+/** An agent may only revoke mandates strictly BELOW it in the delegation tree — never itself-upward. */
+export async function canRevoke(actorMandateId: string, targetMandateId: string): Promise<boolean> {
+  const target = await getMandate(targetMandateId);
+  if (!target) return false;
+  const chain = await getChain(target);
+  return chain.slice(1).some((c) => c.id === actorMandateId);
+}
+
 /** The lock key for a whole delegation tree: money ops anywhere in a tree are serialised together. */
 export const treeKey = (m: Pick<Mandate, "id" | "rootId">) => m.rootId ?? m.id;
 

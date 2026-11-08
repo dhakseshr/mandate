@@ -1,7 +1,7 @@
 const ROWS = [
   { n: "01", step: "Sign", what: "Your sentence compiles to a policy you read, edit and sign.", who: "You", money: "Nothing held yet", blue: false, proof: "Ed25519 seal over the policy" },
   { n: "02", step: "Hold", what: "One PayPal approval reserves the budget. Nothing is charged.", who: "PayPal", money: "AUTHORIZE $120.00 held", blue: true, proof: "PayPal authorization ID" },
-  { n: "03", step: "Shop", what: "Mandate’s agent, or yours over MCP, searches real catalogs and proposes.", who: "The agent", money: "$120.00 still held", blue: true, proof: "Every proposal logged" },
+  { n: "03", step: "Shop", what: "Writ’s agent, or yours over MCP, searches real catalogs and proposes.", who: "The agent", money: "$120.00 still held", blue: true, proof: "Every proposal logged" },
   { n: "04", step: "Decide", what: "Thirteen deterministic checks. Above your line, you decide.", who: "The engine; you above $80", money: "CAPTURE partial $47.95", blue: true, proof: "13 rule checks logged" },
   { n: "05", step: "Release", what: "The unspent hold returns. The mandate closes.", who: "PayPal", money: "VOID remainder $72.05", blue: true, proof: "Append-only ledger entry" },
 ];
@@ -11,7 +11,7 @@ const COLS = "md:grid-cols-[4.5rem_minmax(0,1.6fr)_minmax(0,0.9fr)_minmax(0,1.1f
 /** The lifecycle as a bank statement: one hold, five entries. */
 export function Lifecycle() {
   return (
-    <div className="min-w-0" role="table" aria-label="Mandate lifecycle">
+    <div className="min-w-0" role="table" aria-label="Writ lifecycle">
       <div role="row" className={`hidden border-y border-ink py-2.5 md:grid md:gap-x-6 ${COLS}`}>
         {["Step", "Entry", "Who acts", "Money state", "Proof"].map((h) => (
           <span role="columnheader" key={h} className="label">

@@ -1,13 +1,13 @@
-// Mandate as an MCP server (Streamable HTTP, stateless JSON responses).
+// Writ as an MCP server (Streamable HTTP, stateless JSON responses).
 // ANY AI agent — Claude, ChatGPT, a custom agent — can shop under a PayPal-backed mandate.
 // The agent's credential is scoped to one signed mandate; every purchase still goes through the
 // deterministic policy engine and can only capture from the user's PayPal authorization.
 //
-// Connect (Claude Code):  claude mcp add --transport http mandate "https://<host>/api/mcp?token=mdt_…"
+// Connect (Claude Code):  claude mcp add --transport http writ "https://<host>/api/mcp?token=mdt_…"
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getChain, getMandate, logEvent, type Mandate } from "@/lib/ledger";
+import { canRevoke, getMandate, logEvent, type Mandate } from "@/lib/ledger";
 import { createSubMandate } from "@/lib/delegation";
 import { revokeMandate } from "@/lib/purchase";
 import { makeTools, type RunCtx } from "@/lib/agent/tools";
@@ -15,7 +15,7 @@ import { makeTools, type RunCtx } from "@/lib/agent/tools";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SERVER_INFO = { name: "mandate", title: "Mandate — PayPal-backed spending mandates for AI agents", version: "1.0.0" };
+const SERVER_INFO = { name: "writ", title: "Writ — PayPal-enforced authority for AI agents", version: "1.0.0" };
 
 const TOOLS = [
   {
@@ -180,11 +180,9 @@ async function callTool(m: Mandate, name: string, args: Record<string, any>) {
       };
     }
     case "revoke_sub_mandate": {
-      const target = await getMandate(String(args.mandate_id));
-      const chain = target ? await getChain(target) : [];
-      if (!target || !chain.slice(1).some((c) => c.id === m.id))
+      if (!(await canRevoke(m.id, String(args.mandate_id))))
         return { error: "You can only revoke sub-mandates you (or your sub-agents) delegated." };
-      const ids = await revokeMandate(target.id, String(args.reason ?? "Revoked by the delegating agent"));
+      const ids = await revokeMandate(String(args.mandate_id), String(args.reason ?? "Revoked by the delegating agent"));
       return { revoked: ids };
     }
     case "finish":
@@ -250,5 +248,5 @@ export async function POST(req: Request) {
 
 export async function GET() {
   // Stateless server: no server-initiated SSE stream.
-  return new Response("Mandate MCP endpoint: POST JSON-RPC with your mandate token.", { status: 405, headers: { Allow: "POST" } });
+  return new Response("Writ MCP endpoint: POST JSON-RPC with your mandate token.", { status: 405, headers: { Allow: "POST" } });
 }

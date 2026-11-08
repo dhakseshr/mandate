@@ -60,10 +60,10 @@ export async function startPasskey(mandateId: string, req: Request, credentialId
     if (pk) return { mode: "authenticate" as const, options: await authOptions(m, rpID, pk.id) };
   }
   const options = await generateRegistrationOptions({
-    rpName: "Mandate",
+    rpName: "Writ",
     rpID,
-    userName: "mandate-signer",
-    userDisplayName: "Mandate signer",
+    userName: "writ-signer",
+    userDisplayName: "Writ signer",
     attestationType: "none",
     authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" },
     timeout: 60_000,

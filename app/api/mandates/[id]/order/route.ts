@@ -19,7 +19,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     const order = await createEnvelopeOrder({
       mandateId: `${id}-${Date.now()}`,
       budget: m.budgetTotal,
-      description: `Mandate budget: ${m.policy.goal}`,
+      description: `Writ budget: ${m.policy.goal}`,
     });
     await db.update(schema.mandates).set({ status: "AWAITING_AUTH", paypalOrderId: order.id }).where(eq(schema.mandates.id, id));
     await logEvent({ mandateId: id, type: "PAYPAL", title: `Created PayPal order for a $${m.budgetTotal.toFixed(2)} budget authorization`, paypalId: order.id, amount: m.budgetTotal, detail: { api: "POST /v2/checkout/orders (intent=AUTHORIZE)" } });

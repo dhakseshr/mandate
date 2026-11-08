@@ -9,7 +9,7 @@ const sans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"], w
 const mono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
-  title: "Mandate",
+  title: "Writ",
   description:
     "Your AI can shop. It can’t overspend. You write the rule, PayPal holds the budget, and thirteen deterministic checks — not a model — decide every cent.",
 };
@@ -27,8 +27,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </svg>
         <header className="border-b border-line">
           <div className="mx-auto flex h-14 max-w-[1200px] items-stretch justify-between gap-4 px-4 sm:px-6">
-            <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Mandate, home">
-              <span className="display text-[1.6rem] leading-none text-ink">Mandate</span>
+            <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Writ, home">
+              <span className="display text-[1.6rem] leading-none text-ink">Writ</span>
               <span className="label hidden border-l border-line pl-3 text-muted sm:inline">№ for AI agents</span>
             </Link>
             <SiteNav />
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10">{children}</main>
         <footer className="mt-8 border-t border-line">
           <div className="mx-auto grid max-w-[1200px] gap-3 px-4 py-8 sm:px-6 md:grid-cols-12 md:gap-10">
-            <p className="display text-lg leading-none text-ink md:col-span-3">Mandate</p>
+            <p className="display text-lg leading-none text-ink md:col-span-3">Writ</p>
             <div className="min-w-0 space-y-2 md:col-span-9">
               <p className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-muted">
                 Built on PayPal Orders v2 · Agent Toolkit · JS SDK v6 · Channel3 · AG Grid · Render

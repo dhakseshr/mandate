@@ -4,7 +4,7 @@ import { useState } from "react";
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import { Button, cn } from "../ui";
 
-const KEY = "mandate.passkey.credentialId";
+const KEY = "writ.passkey.credentialId";
 const read = () => {
   try {
     return localStorage.getItem(KEY) ?? undefined;
@@ -48,7 +48,7 @@ export function PasskeySign({
       setBusy("Preparing…");
       let step = await call({ step: "start", credentialId: read() });
       if (step.mode === "register") {
-        setBusy("Create a passkey for Mandate…");
+        setBusy("Create a passkey for Writ…");
         const reg = await startRegistration({ optionsJSON: step.options });
         step = await call({ step: "register", response: reg });
         save(step.credentialId);

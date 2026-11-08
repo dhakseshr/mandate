@@ -11,6 +11,10 @@ import { ApprovalSlip, ConnectAgent, Filed, InstrumentStub, Statement } from "./
 import { DelegationTree } from "./team/delegation-tree";
 import { RevokeControl, RevokedState } from "./team/revoke";
 import { NamesProvider, namesFor } from "./team/names";
+import { suiteState } from "./redteam/suite";
+import { RedTeamControl } from "./redteam/control";
+import { Scorecard } from "./redteam/scorecard";
+import { CrashTest } from "./redteam/crash-test";
 
 /** Mission Control — the money is boxed; every decision is visible. */
 export function MissionControl({ view, onChange }: { view: View; onChange: () => void }) {
@@ -38,7 +42,10 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
   }, [count]);
 
   const denies = useMemo(() => events.filter((e) => e.type === "POLICY_VERDICT" && e.verdict === "DENY"), [events]);
-  const attack = [...denies].reverse().find(isAttack) ?? null;
+  const suite = useMemo(() => suiteState(view), [view]);
+  // Suite attacks are reported by the scorecard, not the single-injection panel.
+  const attack = [...denies].reverse().find((e) => isAttack(e) && !suite.hostile.has(e.mandateId)) ?? null;
+  const proved = !!attack || !!suite.scorecard;
   const searched = events.some((e) => e.tool === "search_products" && e.type === "TOOL_RESULT");
   const rows = useMemo(() => collapse(events), [events]);
 
@@ -55,7 +62,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
     ...(team && !m.parentId ? ["Delegated"] : []),
     team && !m.parentId ? "Agents shopping" : "Agent shopping",
     closed && approvals.length === 0 ? "No approval needed" : "Your approval",
-    ...(m.redTeam || attack ? ["Attack blocked"] : []),
+    ...(m.redTeam || proved || suite.running ? ["Attack blocked"] : []),
     finalStep,
   ];
   const iShop = steps.findIndex((s) => /shopping/.test(s));
@@ -72,14 +79,14 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
           : i === iApproval
             ? approvals.some((a) => a.status !== "PENDING") || (closed && pending.length === 0)
             : i === iAttack
-              ? !!attack
+              ? proved && !suite.running
               : closed,
   );
   const current = pending.length
     ? iApproval
     : closed
       ? -1
-      : m.redTeam && !attack && searched && iAttack >= 0
+      : (suite.running || (m.redTeam && !attack && searched)) && iAttack >= 0
         ? iAttack
         : iDelegate >= 0 && !delegated
           ? iDelegate
@@ -95,6 +102,7 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
     setLaunching(false);
     onChange();
   }
+  const canSuite = mandate.status === "ACTIVE" && !m.parentId && held > 0;
   const canAttack = !!m.redTeam && mandate.status === "ACTIVE" && !attack && (searched || pending.length > 0);
 
   const waiting = pending.length > 0 || run?.status === "WAITING_APPROVAL";
@@ -139,6 +147,27 @@ export function MissionControl({ view, onChange }: { view: View; onChange: () =>
           authorizationId={mandate.authorizationId}
         />
       )}
+
+      {suite.scorecard && suite.scoreEv && !suite.running && (
+        <Scorecard e={suite.scoreEv} s={suite.scorecard}>
+          {canSuite && (
+            <RedTeamControl again mandateId={mandate.id} held={held} running={false} attempts={0} phases={suite.phases} onChange={onChange} />
+          )}
+        </Scorecard>
+      )}
+      {canSuite && (suite.running || !suite.scorecard) && (
+        <RedTeamControl
+          mandateId={mandate.id}
+          held={held}
+          running={suite.running}
+          attempts={suite.attempts}
+          phases={suite.phases}
+          failed={suite.failed?.title ?? null}
+          onChange={onChange}
+        />
+      )}
+
+      {!m.parentId && !revoked && <CrashTest mandateId={mandate.id} />}
 
       {(tree.length > 0 || (team && !m.parentId)) && <DelegationTree view={view} onChange={onChange} />}
 

@@ -1,6 +1,6 @@
 import { LedgerGrid } from "@/components/ledger-grid";
 
-export const metadata = { title: "Ledger · Mandate" };
+export const metadata = { title: "Ledger · Writ" };
 
 export default function LedgerPage() {
   return (

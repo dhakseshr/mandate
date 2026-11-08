@@ -81,6 +81,16 @@ const VERDICT_TONE: Record<string, string> = {
 /** Tiny stamp: uppercase mono word in a 1px colored border, no fill. Attacks tagged. */
 function VerdictCell(p: ICellRendererParams<EventRow>) {
   if (!p.value) return null;
+  const sc = p.data ? scorecardOf(p.data) : null;
+  if (sc)
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className={cn("label rounded-[2px] border px-1 py-[3px] text-[10px]", sc.breaches ? "border-deny bg-deny text-on-accent" : "border-deny text-deny")}>
+          {sc.blocked}/{sc.attempts}
+        </span>
+        <span className="label text-[9px] text-deny">{sc.breaches ? "breach" : "blocked"}</span>
+      </span>
+    );
   const attack = p.data && isAttack(p.data);
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -94,11 +104,30 @@ function isAttack(e: EventRow) {
   const d = (e.detail ?? {}) as { injection?: unknown; product?: { id?: string; title?: string } };
   return !!d.injection || d.product?.id === "redteam_ultra_elite" || /\[RED TEAM\]/i.test(d.product?.title ?? "");
 }
+/** RED_TEAM_SCORECARD rows carry the suite's tally in detail.scorecard. */
+function scorecardOf(e: EventRow): { attempts: number; blocked: number; breaches: number } | null {
+  if (e.rule !== "RED_TEAM_SCORECARD") return null;
+  const s = (e.detail as { scorecard?: { attempts?: number; blocked?: number; breaches?: number } } | null)?.scorecard;
+  return s ? { attempts: s.attempts ?? 0, blocked: s.blocked ?? 0, breaches: s.breaches ?? 0 } : null;
+}
+/** Rule names are ledger keys: mono, never wrapped, full name on hover. */
+function RuleCell(p: ICellRendererParams<EventRow>) {
+  if (!p.value) return null;
+  const v = String(p.value);
+  const deny = p.data?.verdict === "DENY";
+  return (
+    <span title={v} className={cn("num block truncate text-[12px]", v === "RED_TEAM_SCORECARD" || deny ? "text-deny" : "text-ink")}>
+      {v === "RED_TEAM_SCORECARD" ? "RED_TEAM · SCORECARD" : v}
+    </span>
+  );
+}
 /** Tool-keyed events read by what they did (same names as the Mission Control log). */
-const TOOL_TAG: Record<string, string> = { delegate: "DELEGATE", revoke: "REVOKE", verify: "VERIFY", passkey: "PASSKEY" };
+const TOOL_TAG: Record<string, string> = { delegate: "DELEGATE", revoke: "REVOKE", verify: "VERIFY", passkey: "PASSKEY", redteam: "REDTEAM" };
 function TypeCell(p: ICellRendererParams<EventRow>) {
-  const tool = p.data?.tool ? TOOL_TAG[p.data.tool] : undefined;
-  const tone = tool === "REVOKE" ? "text-deny" : p.value === "PAYPAL" ? "text-paypal" : tool || p.value === "HUMAN" || p.value === "POLICY_VERDICT" ? "text-ink" : "text-muted";
+  const raw = p.data?.tool ? TOOL_TAG[p.data.tool] : undefined;
+  // PayPal's own reads stay PAYPAL; a verdict on a revoke attempt is a verdict.
+  const tool = (raw === "REDTEAM" && p.value === "PAYPAL") || (raw === "REVOKE" && p.value === "POLICY_VERDICT") ? undefined : raw;
+  const tone = tool === "REVOKE" || tool === "REDTEAM" ? "text-deny" : p.value === "PAYPAL" ? "text-paypal" : tool || p.value === "HUMAN" || p.value === "POLICY_VERDICT" ? "text-ink" : "text-muted";
   return <span className={cn("label text-[10px]", tone)}>{tool ?? String(p.value ?? "").replace("POLICY_", "")}</span>;
 }
 function MandateCell(p: ICellRendererParams<EventRow | MandateRow>) {
@@ -131,6 +160,31 @@ function PayPalIdCell(p: ICellRendererParams) {
       {copied ? "copied" : v}
     </button>
   );
+}
+
+/**
+ * Attack attempts blocked: every red-team scorecard's tally, plus single prompt-injection denials
+ * outside a suite run (suite attacks are already in their scorecard — never counted twice).
+ */
+function attackAttempts(ev: EventRow[]) {
+  let blocked = 0;
+  // Suite run windows: "Red team starting" → that root's next scorecard. Attacks inside a window are in its scorecard.
+  const windows: [number, number][] = [];
+  const asc = [...ev].sort((x, y) => +new Date(x.ts) - +new Date(y.ts));
+  const open = new Map<string, number>();
+  for (const e of asc) {
+    const t = +new Date(e.ts);
+    if (e.tool === "redteam" && e.type === "PAYPAL" && /^Red team starting/.test(e.title)) open.set(e.mandateId, t);
+    const sc = scorecardOf(e);
+    if (sc) {
+      blocked += sc.blocked;
+      windows.push([open.get(e.mandateId) ?? t, t]);
+      open.delete(e.mandateId);
+    }
+  }
+  for (const t of open.values()) windows.push([t, Infinity]); // a run still in progress
+  const inSuite = (e: EventRow) => windows.some(([a, b]) => +new Date(e.ts) >= a && +new Date(e.ts) <= b);
+  return blocked + ev.filter((e) => isAttack(e) && !inSuite(e)).length;
 }
 
 export function LedgerGrid() {
@@ -189,7 +243,7 @@ export function LedgerGrid() {
       { field: "type", hide: narrow, headerName: "Type", cellRenderer: TypeCell, width: 140, filter: true },
       { field: "title", headerName: "Event", flex: 2, minWidth: narrow ? 120 : 260, tooltipField: "title", filter: true },
       { field: "verdict", headerName: "Verdict", cellRenderer: VerdictCell, width: narrow ? 126 : 150, filter: true },
-      { field: "rule", hide: narrow, headerName: "Rule", width: 170, filter: true, cellClass: "text-[12px]" },
+      { field: "rule", hide: narrow, headerName: "Rule", width: 196, filter: true, cellRenderer: RuleCell, tooltipField: "rule" },
       { field: "merchant", hide: narrow, headerName: "Merchant", width: 140, filter: true },
       { field: "amount", hide: narrow, headerName: "Amount", valueFormatter: money, width: 110, type: "rightAligned", filter: "agNumberColumnFilter", cellClass: "num" },
       { field: "paypalId", hide: narrow, headerName: "PayPal ID", width: 190, cellRenderer: PayPalIdCell, filter: true },
@@ -234,7 +288,7 @@ export function LedgerGrid() {
       escalate: ev.filter((e) => e.verdict === "ESCALATE").length,
       approved: ev.filter((e) => e.verdict === "APPROVED").length,
       deny: ev.filter((e) => e.verdict === "DENY").length,
-      attacks: ev.filter(isAttack).length,
+      attacks: attackAttempts(ev),
     };
   }, [data]);
 
@@ -243,7 +297,7 @@ export function LedgerGrid() {
     ["Captured", usd(kpi.captured), "text-ink"],
     ["Released", usd(kpi.released), "text-paypal"],
     ["Refunded", usd(kpi.refunded), "text-ink"],
-    ["Attacks blocked", String(kpi.attacks), kpi.attacks > 0 ? "text-deny" : "text-ink"],
+    ["Attack attempts blocked", String(kpi.attacks), kpi.attacks > 0 ? "text-deny" : "text-ink"],
   ];
 
   return (
@@ -268,7 +322,7 @@ export function LedgerGrid() {
               i % 3 !== 0 && "sm:max-lg:border-l",
               i >= 3 && "sm:max-lg:border-t",
               i === 0 && "sm:pl-0",
-              label === "Attacks blocked" && "max-sm:col-span-2 max-sm:border-l-0 max-sm:pl-0",
+              label === "Attack attempts blocked" && "max-sm:col-span-2 max-sm:border-l-0 max-sm:pl-0",
             )}
           >
             <dt className="label text-[10px] text-muted">{label}</dt>
@@ -300,7 +354,7 @@ export function LedgerGrid() {
             <span className="label text-[10px] text-muted">Find</span>
             <input value={quick} onChange={(e) => setQuick(e.target.value)} placeholder="rule, merchant, PayPal ID…" className="w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted sm:w-52 sm:text-sm" />
           </label>
-          <Button variant="ghost" className="shrink-0" onClick={() => grid.current?.api.exportDataAsCsv({ fileName: `mandate-${tab}.csv` })}>
+          <Button variant="ghost" className="shrink-0" onClick={() => grid.current?.api.exportDataAsCsv({ fileName: `writ-${tab}.csv` })}>
             <Download size={14} aria-hidden /> CSV
           </Button>
         </div>

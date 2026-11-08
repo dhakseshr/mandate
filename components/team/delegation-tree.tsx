@@ -5,6 +5,7 @@ import { Badge, SealTag, Stamp, cn, usd } from "../ui";
 import { det, type Ev } from "../log/shared";
 import { RevokeControl } from "./revoke";
 import { runLabel, type TreeNode } from "./names";
+import { hostileIds } from "../redteam/suite";
 
 type Ghost = { id: string; name: string; goal?: string; amount: number | null; violations: { field?: string; message: string }[] };
 
@@ -28,7 +29,9 @@ export function refusedDelegations(events: Ev[]): Ghost[] {
 export function DelegationTree({ view, onChange }: { view: View; onChange: () => void }) {
   const { mandate, tree, approvals, events } = view;
   const m = mandate as View["mandate"] & { parentId?: string | null; name?: string | null };
-  const ghosts = refusedDelegations(events.filter((e) => e.mandateId === mandate.id || tree.some((t) => t.id === e.mandateId)));
+  // Refusals inside a red-team agent's subtree are attacks — they're counted on its card and in the scorecard.
+  const hostile = hostileIds(tree);
+  const ghosts = refusedDelegations(events.filter((e) => !hostile.has(e.mandateId) && (e.mandateId === mandate.id || tree.some((t) => t.id === e.mandateId))));
   const kids = tree.filter((t) => t.parentId === mandate.id);
   const authorized = Math.min(mandate.budgetTotal, mandate.authorizedAmount || mandate.budgetTotal);
   const live = kids.filter((k) => k.status === "ACTIVE");
@@ -123,9 +126,13 @@ export function DelegationTree({ view, onChange }: { view: View; onChange: () =>
               style={{ left: `calc((100% - ${cols - 1}rem) / ${cols * 2})`, right: `calc((100% - ${cols - 1}rem) / ${cols * 2})` }}
             />
             <ul className="grid gap-4 lg:grid-cols-[repeat(var(--cols),minmax(0,1fr))]" style={{ ["--cols" as string]: cols }}>
-              {kids.map((k) => (
-                <Child key={k.id} k={k} pending={pendingBy(k.id)} onChange={onChange} />
-              ))}
+              {kids.map((k) =>
+                hostile.has(k.id) ? (
+                  <HostileChild key={k.id} k={k} events={events} tree={tree} />
+                ) : (
+                  <Child key={k.id} k={k} pending={pendingBy(k.id)} onChange={onChange} />
+                ),
+              )}
               {ghosts.map((g) => (
                 <GhostCard key={g.id} g={g} />
               ))}
@@ -203,6 +210,64 @@ function Child({ k, pending, onChange }: { k: TreeNode; pending: number; onChang
           <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
             <SealTag hash={k.signatureHash} className={revoked ? "text-muted" : undefined} />
             {k.status === "ACTIVE" && <RevokeControl compact mandateId={k.id} name={k.name ?? "this sub-mandate"} amount={left} root={false} onDone={onChange} />}
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+}
+
+/** A red-team agent: real signed authority, handed to a compromised agent on purpose. Deny-tinted, never a specialist. */
+function HostileChild({ k, events, tree }: { k: TreeNode; events: Ev[]; tree: TreeNode[] }) {
+  const revoked = k.status === "REVOKED";
+  // Its own subtree: anything it managed to delegate to before the kill switch.
+  const sub = new Set([k.id]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const t of tree)
+      if (!sub.has(t.id) && t.parentId && sub.has(t.parentId)) {
+        sub.add(t.id);
+        grew = true;
+      }
+  }
+  const verdicts = events.filter((e) => e.type === "POLICY_VERDICT" && sub.has(e.mandateId));
+  const denied = verdicts.filter((e) => e.verdict === "DENY").length;
+  const held = verdicts.filter((e) => e.verdict === "ESCALATE").length;
+  const spent = tree.filter((t) => sub.has(t.id)).reduce((a, t) => a + t.spentTotal, 0);
+  const helpers = sub.size - 1;
+  return (
+    <li className={cn(tick, "before:bg-deny/60 lg:before:bg-deny/60")}>
+      <article className="flex h-full flex-col border border-deny/60 border-l-[3px] border-l-deny bg-surface" aria-label={`${k.name}, compromised, ${revoked ? "revoked" : "attacking"}`}>
+        <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
+          <span className="label text-[10px] text-deny">Compromised · {revoked ? "revoked" : "attacking"}</span>
+          {revoked ? <Stamp verdict="DENY" rotate={-4}>Revoked</Stamp> : <span className="label text-[10px] text-deny">live<span className="caret ml-1" aria-hidden /></span>}
+        </div>
+        <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
+          <h3 className="display text-[1.3rem] leading-tight text-ink">{k.name}</h3>
+          <p className="mt-1 text-[13px] leading-snug text-muted">Ordered to spend outside the mandate. Same token, same rules as any agent.</p>
+          <div className="mt-3 flex items-baseline justify-between gap-2">
+            <span className="label text-[10px] text-muted">Given</span>
+            <span className={cn("num text-[17px] font-medium", revoked ? "text-muted line-through decoration-deny/70" : "text-ink")}>≤ {usd(k.budgetTotal)}</span>
+          </div>
+          <dl className="num mt-3 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-2 gap-y-1 border-t border-dashed border-line pt-2 text-[11px]">
+            <dt className="text-muted">denied</dt>
+            <dd className="text-deny">{denied} attempt{denied === 1 ? "" : "s"}</dd>
+            <dt className="text-muted">escalated</dt>
+            <dd className="text-escalate">{held} · declined, never captured</dd>
+            {helpers > 0 && (
+              <>
+                <dt className="text-muted">sub-agents</dt>
+                <dd className="text-ink">{helpers} · revoked with it</dd>
+              </>
+            )}
+            <dt className="text-muted">captured</dt>
+            <dd className="font-medium text-ink">{usd(spent)}</dd>
+          </dl>
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+            <SealTag hash={k.signatureHash} className="text-muted" />
+            <a href="#redteam-scorecard" className="label inline-flex min-h-11 items-center text-[10px] text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+              Scorecard ↑
+            </a>
           </div>
         </div>
       </article>

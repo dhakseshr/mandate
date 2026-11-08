@@ -8,7 +8,7 @@ export type TreeNode = View["tree"][number];
  * Who said it: maps a mandateId in the subtree to a short actor name.
  * `self` is the mandate being viewed (its rows carry no prefix); `root` names the top of the chain.
  */
-export type Names = { self: string; byId: Record<string, string>; rootLabel: string };
+export type Names = { self: string; byId: Record<string, string>; rootLabel: string; hostile?: Record<string, boolean> };
 const Ctx = createContext<Names | null>(null);
 export const NamesProvider = Ctx.Provider;
 export const useNames = () => useContext(Ctx);
@@ -19,7 +19,19 @@ export function namesFor(view: View): Names {
   const byId: Record<string, string> = {};
   byId[m.id] = m.parentId ? m.name || "Sub-agent" : team ? "Orchestrator" : "You";
   for (const t of view.tree ?? []) byId[t.id] = t.name || `Sub-agent ${t.id.slice(-4)}`;
-  return { self: m.id, byId, rootLabel: m.parentId ? "Parent mandate" : "Your mandate" };
+  // Red-team agents and anything they delegated to: labelled as hostile in the log.
+  const hostile: Record<string, boolean> = {};
+  for (const t of view.tree ?? []) if (t.name === "Red-team agent") hostile[t.id] = true;
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const t of view.tree ?? [])
+      if (!hostile[t.id] && t.parentId && hostile[t.parentId]) {
+        hostile[t.id] = true;
+        grew = true;
+      }
+  }
+  if (m.name === "Red-team agent") hostile[m.id] = true;
+  return { self: m.id, byId, rootLabel: m.parentId ? "Parent mandate" : "Your mandate", hostile };
 }
 
 /** "Monitor agent" → "MONITOR" for the 4.75rem tag column. */

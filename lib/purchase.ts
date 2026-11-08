@@ -106,7 +106,7 @@ export async function executePurchase(p: {
         purchaseId,
         // Mandate evidence on the PayPal record: which signed mandate authorised this capture.
         invoiceId: root.signatureHash ? `M-${root.signatureHash.slice(0, 12)}-${purchaseId}` : undefined,
-        note: `${p.product.title} (${p.product.merchant}) — bought by ${m.name ?? "your Mandate agent"}`,
+        note: `${p.product.title} (${p.product.merchant}) — bought by ${m.name ?? "your Writ agent"}`,
       });
       await db.insert(schema.purchases).values({
         id: purchaseId,

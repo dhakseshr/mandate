@@ -4,7 +4,7 @@ import { Badge, Stamp, verdictTone } from "@/components/ui";
 import { CopyLine } from "@/components/landing/copy-line";
 import { INJECTION_TEXT, POISONED_PRODUCT } from "@/lib/redteam";
 
-export const metadata = { title: "Guided demo · Mandate" };
+export const metadata = { title: "Guided demo · Writ" };
 
 const BEATS = [
   { title: "Draft the mandate", body: "Your sentence compiles into a policy you can read and edit: budget, ask-above line, deadline, merchants to avoid." },
@@ -17,6 +17,19 @@ const BEATS = [
 
 const RED_TEAM_PROMPT = "Running shoes for my marathon, max $120, ask me above $80. [red-team]";
 const prefill = (p: string) => `/?prompt=${encodeURIComponent(p)}#compose`;
+
+const PROCUREMENT = {
+  title: "Procurement · Onboarding kit for a new team",
+  prompt:
+    "Procurement: onboarding kit for our new design team — monitors, noise-cancelling headphones and desk lamps. Budget $1,500 total, ask me before any single purchase over $200. Nothing from Amazon.",
+  note: "Choose ‘A team of agents’ on the review screen. Then run the red-team suite from Mission Control.",
+  terms: [
+    ["Budget", "$1,500.00", true],
+    ["Ask above", "$200.00", false],
+    ["Blocked", "amazon.com", false],
+    ["Agents", "a team", false],
+  ] as const,
+};
 
 /** Secondary scenarios. Append one object to add a row (e.g. a business / "AI employees" scenario); letters follow on from A. */
 type Scenario = { id: string; title: string; body: string; prompt: string; verdicts: readonly ("ALLOW" | "ESCALATE" | "DENY")[]; beats: string; note?: string };
@@ -60,7 +73,7 @@ export default function DemoPage() {
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="grid grid-cols-1 gap-6 pb-16 pt-2 sm:pt-6 lg:grid-cols-12 lg:gap-10">
         <div className="min-w-0 lg:col-span-8">
-          <span className="label">Guided demo · PayPal sandbox · about two minutes</span>
+          <span className="label">Guided demo · PayPal sandbox · the financial permission layer for autonomous AI</span>
           <h1 className="display mt-6 text-balance text-[2.5rem] leading-[1.02] tracking-[-0.025em] text-ink sm:text-[3.5rem]">
             Watch an agent shop on a leash.
           </h1>
@@ -100,7 +113,39 @@ export default function DemoPage() {
             Scenarios
           </h2>
 
-          <article id="red-team" className="mt-6 scroll-mt-24 border border-line bg-surface">
+          <article id="procurement" aria-labelledby="procurement-h" className="mt-6 scroll-mt-24 border border-ink/80 bg-surface shadow-paper">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3 sm:px-6">
+              <span className="label text-ink">Featured · enterprise procurement</span>
+              <span className="label">Delegation · red-team suite</span>
+            </div>
+            <div className="px-5 py-6 sm:px-6">
+              <h3 id="procurement-h" className="display text-[1.75rem] font-medium leading-[1.15] text-ink">{PROCUREMENT.title}</h3>
+              <p className="mt-2 max-w-[38rem] text-[15px] leading-relaxed text-muted">
+                One $1,500 PayPal hold. An orchestrator splits it into narrower, signed sub-mandates — one per item. Then a compromised agent gets $100 of
+                it and is told to steal; PayPal is asked before and after.
+              </p>
+              <dl className="mt-5 grid grid-cols-2 border-y border-line sm:grid-cols-4">
+                {PROCUREMENT.terms.map(([k, v, blue], i) => (
+                  <div key={k} className={`min-w-0 py-3 pr-3 ${i % 2 === 1 ? "max-sm:border-l max-sm:pl-3" : ""} ${i >= 2 ? "max-sm:border-t" : ""} ${i > 0 ? "sm:border-l sm:pl-4" : ""} border-line`}>
+                    <dt className="label text-[10px]">{k}</dt>
+                    <dd className={`num mt-1.5 truncate text-[14px] ${blue ? "text-paypal" : "text-ink"}`}>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="num mt-4 border-l-2 border-ink pl-2.5 text-[12px] leading-snug text-ink">{PROCUREMENT.note}</p>
+            </div>
+            <div className="flex flex-col gap-4 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="display min-w-0 text-[1.05rem] italic leading-snug text-muted">“{PROCUREMENT.prompt}”</p>
+              <Link
+                href={prefill(PROCUREMENT.prompt)}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[2px] bg-ink px-5 text-sm font-medium text-on-accent transition-colors duration-[120ms] hover:bg-ink/90"
+              >
+                Run this scenario <ArrowRight size={16} aria-hidden />
+              </Link>
+            </div>
+          </article>
+
+          <article id="red-team" className="mt-8 scroll-mt-24 border border-line bg-surface">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3 sm:px-6">
               <span className="label text-ink">Scenario A · Red team · all six beats</span>
               <span className="label">Prompt injection</span>
@@ -147,6 +192,14 @@ export default function DemoPage() {
                   <Stamp verdict="DENY" size="md" rotate={-7} />
                 </div>
               </div>
+            </div>
+
+            <div className="border-t border-line px-5 py-4 sm:px-6">
+              <p className="text-sm leading-relaxed text-muted">
+                <span className="label mr-2 text-[10px] text-deny">Red-team suite</span>
+                On any live mandate, Mission Control runs the full battery: nine scripted attacks, then an adversarial AI told to break the rules, then the kill
+                switch. PayPal is asked before and after; the scorecard lands in the ledger.
+              </p>
             </div>
 
             <div className="flex flex-col gap-4 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">

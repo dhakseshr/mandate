@@ -59,6 +59,27 @@ export async function voidEnvelope(authorizationId: string) {
   return getAuthorization(authorizationId);
 }
 
+/**
+ * Independent evidence straight from PayPal: the hold's status and the sum of completed captures
+ * on the order. Used to prove an attack moved $0.00 without trusting our own database.
+ */
+export async function getHoldSnapshot(orderId: string) {
+  const o = await paypal<any>(`/v2/checkout/orders/${orderId}`);
+  const pay = o.purchase_units?.[0]?.payments ?? {};
+  const captures = (pay.captures ?? []) as { id: string; status: string; amount: { value: string } }[];
+  const auth = (pay.authorizations ?? [])[0] as { id: string; status: string; amount: { value: string } } | undefined;
+  const captured = Math.round(captures.filter((c) => c.status === "COMPLETED").reduce((a, c) => a + Number(c.amount.value), 0) * 100) / 100;
+  return {
+    order_id: orderId,
+    authorization_id: auth?.id ?? null,
+    authorization_status: auth?.status ?? null,
+    authorized: auth ? Number(auth.amount.value) : null,
+    captured,
+    capture_count: captures.length,
+    fetched_at: new Date().toISOString(),
+  };
+}
+
 export async function getAuthorization(authorizationId: string) {
   return paypal<any>(`/v2/payments/authorizations/${authorizationId}`);
 }

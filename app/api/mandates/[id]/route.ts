@@ -32,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           ? "You chose to connect your own AI agent (MCP)"
           : body.agentMode === "team"
             ? "You chose a team of agents (orchestrator + specialists)"
-            : "You chose Mandate's built-in agent",
+            : "You chose Writ's built-in agent",
     });
   }
   if (body.policy) {

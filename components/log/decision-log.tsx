@@ -12,6 +12,10 @@ type Tag = { text: string; tone: string };
 const vTone = (v?: string | null) => (v === "DENY" ? "text-deny" : v === "ESCALATE" ? "text-escalate" : "text-allow");
 const isPlan = (e: Ev) => e.type === "THOUGHT" && (/^Orchestrator:/.test(e.title) || Array.isArray(det(e).plan));
 const TAGS: { when: (e: Ev) => boolean; tag: (e: Ev) => Tag }[] = [
+  // Red-team suite harness (PayPal's own before/after reads stay PAYPAL — PayPal owns those verbs).
+  { when: (e) => e.tool === "redteam" && e.type !== "PAYPAL", tag: () => ({ text: "REDTEAM", tone: "text-deny" }) },
+  // A verdict on a revoke attempt (TOKEN_SCOPE) is a verdict, not a revocation.
+  { when: (e) => e.type === "POLICY_VERDICT" && e.tool === "revoke", tag: (e) => ({ text: "VERDICT", tone: vTone(e.verdict) }) },
   // Delegation, kill switch, merchant verification, passkey — keyed on tool, before the generic type matchers.
   { when: (e) => e.tool === "delegate", tag: (e) => ({ text: "DELEGATE", tone: e.verdict === "DENY" ? "text-deny" : "text-ink" }) },
   { when: (e) => e.tool === "revoke", tag: () => ({ text: "REVOKE", tone: "text-deny" }) },
@@ -42,12 +46,14 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
   const d = det(e);
   const names = useNames();
   const who = names && e.mandateId !== names.self ? names.byId[e.mandateId] : undefined;
+  const hostile = !!names?.hostile?.[e.mandateId];
   const quietThought = e.type === "THOUGHT" && e.title === "Thinking…" && !d.hijacked;
   return (
     <li
       className={cn(
         "animate-ink grid grid-cols-[4.25rem_minmax(0,1fr)] gap-x-3 border-b border-line/70 px-3 py-2 last:border-b-0 sm:grid-cols-[4.25rem_4.75rem_minmax(0,1fr)] sm:px-4",
         e.type === "POLICY_VERDICT" && "py-3",
+        hostile && "border-l-2 border-l-deny/70 pl-[10px] sm:pl-[14px]",
       )}
     >
       <time dateTime={new Date(e.ts).toISOString()} className="hidden pt-px text-muted sm:block">
@@ -56,7 +62,7 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
       <div className="pt-px">
         <span className={cn("label block pt-[3px] text-[10px]", tag.tone)}>{tag.text}</span>
         {who && (
-          <span className="label mt-1 block truncate text-[9px] tracking-[0.06em] text-muted" title={`From ${who}`}>
+          <span className={cn("label mt-1 block truncate text-[9px] tracking-[0.06em]", hostile ? "text-deny" : "text-muted")} title={`From ${who}${hostile ? " (compromised on purpose)" : ""}`}>
             <span aria-hidden>↳</span>
             <span className="sr-only">from </span>
             {shortName(who)}
@@ -67,7 +73,9 @@ export function LogRow({ e, n = 1, held, closed }: { e: Ev; n?: number; held: nu
         </time>
       </div>
       <div className="min-w-0">
-        {e.type === "POLICY_VERDICT" && e.tool === "delegate" ? (
+        {e.rule === "RED_TEAM_SCORECARD" ? (
+          <ScorecardLine e={e} />
+        ) : e.type === "POLICY_VERDICT" && e.tool === "delegate" ? (
           <RefusedDelegation e={e} />
         ) : e.type === "POLICY_VERDICT" ? (
           <VerdictBlock e={e} held={held} closed={closed} />
@@ -120,7 +128,7 @@ function lineTone(e: Ev) {
   if (e.tool === "delegate" || e.tool === "passkey") return "text-ink";
   if (e.tool === "revoke") return "text-ink";
   if (e.tool === "verify") return e.verdict === "DENY" ? "text-deny" : "text-ink";
-  if (e.type === "SYSTEM") return /red team|error/i.test(e.title) ? "text-deny" : "text-muted";
+  if (e.type === "SYSTEM") return /red[ -]team|adversarial|error/i.test(e.title) ? "text-deny" : "text-muted";
   if (e.type === "TOOL_RESULT" || e.type === "TOOL_CALL") return e.tool === "propose_purchase" ? "text-ink" : "text-muted";
   return "text-ink";
 }
@@ -148,12 +156,39 @@ function PayPalLine({ e, n }: { e: Ev; n: number }) {
         </span>
         {e.amount != null && <span className="num shrink-0">{usd(e.amount)}</span>}
       </p>
+      {d.snapshot && (
+        <p className="num mt-0.5 text-[12px] text-muted">
+          read from PayPal · authorization <span className="text-paypal">{String(d.snapshot.authorization_status ?? "—")}</span> · captured{" "}
+          <span className="text-paypal">{usd(d.snapshot.captured ?? 0)}</span> · {Number(d.snapshot.capture_count ?? 0)} capture{d.snapshot.capture_count === 1 ? "" : "s"}
+          {d.snapshot.authorization_id && <> · <CopyId value={String(d.snapshot.authorization_id)} label="PayPal authorization ID" /></>}
+        </p>
+      )}
       {(d.api || e.paypalId) && (
         <p className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[12px]">
           {d.api && <code className="break-all text-muted">{String(d.api)}</code>}
           {e.paypalId && <CopyId value={e.paypalId} label="PayPal ID" />}
         </p>
       )}
+    </div>
+  );
+}
+
+/** RED_TEAM_SCORECARD: one line in the log; the full statement sits above it. */
+function ScorecardLine({ e }: { e: Ev }) {
+  const s = (det(e).scorecard ?? {}) as { attempts?: number; blocked?: number; breaches?: number; moved?: number };
+  const clean = (s.breaches ?? 0) === 0;
+  return (
+    <div>
+      <p className="text-muted">red-team suite finished · scorecard filed</p>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-dashed border-line pt-2">
+        <Stamp verdict="DENY" animate rotate={-3}>{clean ? "0 breaches" : `${s.breaches} breach`}</Stamp>
+        <span className="min-w-0 flex-1 basis-48 font-medium text-ink">
+          {s.blocked ?? "—"}/{s.attempts ?? "—"} attacks blocked · {usd(s.moved ?? 0)} moved
+        </span>
+        <a href="#redteam-scorecard" className="shrink-0 text-[12px] text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+          scorecard ↑
+        </a>
+      </div>
     </div>
   );
 }
