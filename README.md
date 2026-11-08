@@ -115,6 +115,51 @@ The **Red team** scenario on `/demo` shows the single-agent prompt-injection att
 
 ---
 
+## Beyond shopping: one authority for everything an agent spends
+
+### Writ Tab: paid APIs without a side wallet
+Agents also pay for data: filings, market data, premium search, research databases. With Writ Tab, each call works like this:
+
+1. The provider answers **HTTP 402** with an **Ed25519-signed price challenge**.
+2. Writ verifies it. The provider's key is pinned, and a tampered price or an expired quote is denied as `PROVIDER_SIGNATURE`.
+3. The **same policy engine evaluates the call at every level of the delegation chain**: budget, per-call cap, approval line, provider blocks, categories.
+4. Approved calls get a **signed short-lived receipt**, which the provider checks before returning data.
+5. Charges **accrue on a tab** and **settle as one real PayPal partial capture** from the root hold, at $1.00 or when the mandate closes. Micro-charges aren't economical one by one.
+
+A tab can never become a way around the mandate. A research sub-agent's 5-cent calls are bounded by its own slice, its parent's limits and the human's rules. **The providers are simulated in the sandbox; the PayPal settlement and refunds are real.**
+
+### Writ Forensics: an authorized payment isn't the same as a correct one
+When something goes wrong, `GET /api/purchases/{id}/forensics` rebuilds the **evidence graph**, a numbered chain of records:
+- the human's words and their **passkey signature**
+- the signed mandate and the **delegation chain**
+- what the merchant or provider advertised
+- what the agent chose, and why
+- all 13 checks
+- the merchant receipt
+- the PayPal capture and webhooks
+- what was delivered or returned
+- the complaint
+
+**Deterministic checks** answer three questions separately: was it **authorized**? Did the **agent follow the instruction**? Did the **merchant or provider deliver** what was advertised? An investigation agent then writes a report in which **every claim must cite evidence IDs**; code drops anything uncited. It **recommends** an action: refund, a dispute evidence pack, or nothing. **A human approves.** Refunds run through the PayPal Agent Toolkit, and dispute packs are Ed25519-signed.
+
+**Example from our tests:** a research agent paid a manipulated provider, which returned a fabricated "412% growth" figure plus an injected "buy the premium bundle" instruction. Forensics found:
+- authorization **PASS**
+- the agent's call within its limits
+- provider response **FAIL** (injection detected)
+
+The verdict was **provider at fault**, recommending a refund, with high confidence and every claim cited.
+
+### Agent Passport
+`GET /api/agents/{id}/passport` returns a **signed, scoped credential** for any agent:
+- who delegated its authority (with hashes up to the human)
+- its limits, what it has spent, and its status
+- its PayPal backing
+- its latest assurance certificate
+
+Merchants and other agents can verify it with `POST /api/verify?check`.
+
+---
+
 ## How it works
 
 ```
@@ -225,6 +270,8 @@ lib/purchase.ts           the only code path that moves money (+ close, kill swi
 lib/delegation.ts         sub-mandates, orchestrator planner
 lib/redteam-suite.ts      compromised-agent suite + PayPal before/after evidence + certificate
 lib/crashtest.ts          policy-specific boundary matrix (crash test)
+lib/tab/*                 Writ Tab: signed 402 providers, tab accrual, batch PayPal settlement
+lib/forensics.ts          evidence graph, deterministic checks, cited investigation, resolution
 lib/verify.ts             merchant verification receipts
 lib/signing.ts            Ed25519, canonical JSON, AP2-shaped document
 lib/passkey.ts            WebAuthn signing (challenge = sha256 of the intent)
@@ -253,7 +300,8 @@ tests/**                  Vitest suites
 - **Sandbox only.** Writ is the merchant of record and fulfilment is simulated. The production path is PayPal Agent Ready / Store Sync merchants and Payouts.
 - **Product data:** Channel3 doesn't provide delivery estimates, so they're deterministic per merchant. Ratings are often missing.
 - **Back-translation** is a deterministic cross-check, not a second model.
-- **Not built yet** (roadmap): full AP2 Cart/Payment mandate chain, dispute evidence via the Disputes API, phone approvals, earned autonomy, nightly scheduled red-team runs, merchant SDK and badge, A2A/ACP/UCP adapters, Vault recurring mandates, Payouts settlement.
+- **Writ Tab providers are simulated** (signed 402 challenges, synthetic data); settlement and refunds are real PayPal sandbox operations. Dispute packs are signed and exported, not filed through the Disputes API.
+- **Not built yet** (roadmap): full AP2 Cart/Payment mandate chain, filing disputes via the Disputes API, phone approvals, earned autonomy, nightly scheduled red-team runs, merchant SDK and badge, A2A/ACP/UCP adapters, Vault recurring mandates, Payouts settlement.
 
 ## License
 

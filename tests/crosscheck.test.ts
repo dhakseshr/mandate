@@ -33,4 +33,11 @@ describe("deterministic cross-check of the AI-compiled policy", () => {
     expect(r.policy.max_per_item).toBe(0.2);
     expect(r.policy.merchants_block).toContain("insight-wire.example");
   });
+
+  it("keeps the user's own scope phrase as an allowed category", () => {
+    const r = crossCheck("Research cloud GPU demand. Max $5 total, research data only.", { ...base, categories_allow: ["market research", "industry data"] });
+    expect(r.policy.categories_allow).toContain("research data");
+    const none = crossCheck("Shoes, only well rated ones, max $120.", { ...base, categories_allow: ["shoes"] });
+    expect(none.policy.categories_allow).toEqual(["shoes"]);
+  });
 });

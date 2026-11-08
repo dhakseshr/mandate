@@ -41,6 +41,18 @@ export function crossCheck(text: string, policy: Policy): { policy: Policy; fixe
     }
   }
 
+  // Scope: "research data only", "office furniture only" → the user's own phrase must be an allowed category.
+  for (const mm of t.matchAll(/(?:^|[,.;:]\s*|\b(?:buy|for|in)\s+)((?:[a-z][a-z-]+\s){0,2}[a-z][a-z-]+)\s+only\b/gi)) {
+    const phrase = mm[1].toLowerCase().trim();
+    const words = phrase.split(/\s+/);
+    const STOPS = new Set(["me", "ask", "well", "rated", "new", "the", "a", "an", "one", "items", "item", "things", "us", "you", "it", "them", "budget", "max"]);
+    if (words.some((w) => STOPS.has(w)) || /\d/.test(phrase)) continue;
+    if (p.categories_allow.length && !p.categories_allow.some((c) => c.toLowerCase() === phrase)) {
+      p.categories_allow = [...p.categories_allow, phrase];
+      fixes.push(`Added category “${phrase}” — you wrote “${mm[0].trim()}”`);
+    }
+  }
+
   // Exclusions: "nothing from Amazon", "no Walmart", "avoid Temu", "not from eBay", "except Shein"
   // Keywords are case-insensitive; the excluded name must be Capitalized (a proper noun) to avoid
   // false positives like "no more than".
