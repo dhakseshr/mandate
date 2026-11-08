@@ -29,7 +29,12 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 7. **Merchants** can verify any agent order at `/verify` and get a signed, offline-verifiable receipt.
 8. **Writ Tab: agents pay for data.** Paid APIs answer **HTTP 402** with a signed price. Writ verifies it, the same engine checks the call at every level of the chain, and charges accrue on a tab that **settles as one PayPal capture**. A 5-cent call can't escape the mandate. (The providers are simulated; the PayPal settlement is real.)
 9. **Writ Forensics: an authorized payment isn't the same as a correct one.** Every purchase has an evidence graph. Code answers three questions (*authorized? did the agent follow the instruction? did the merchant or provider deliver?*), and an investigation agent cites evidence for every claim (uncited claims are dropped). It **recommends**: you approve a refund (via the Agent Toolkit) or a signed dispute pack.
-10. **Agent Passport:** a signed, verifiable credential stating any agent's authority and delegation chain, up to the human.
+10. **Know Your Merchant, autonomy profiles, photo and voice missions:**
+    - Look-alike and impersonating storefronts are denied.
+    - Careful / Balanced / Autopilot presets never loosen a limit you wrote.
+    - Missions can start from a photo or your voice.
+    - Tab settlements pay providers through **PayPal Payouts**.
+11. **Agent Passport:** a signed, verifiable credential stating any agent's authority and delegation chain, up to the human.
 
 ## How we built it
 **PayPal:**
@@ -38,6 +43,7 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 - **PayPal Agent Toolkit** (`create_refund`, `create_shipment_tracking`, `get_shipment_tracking`), wrapped so it only runs behind the policy engine
 - **Webhooks** with `verify-webhook-signature`
 - **JS SDK v6** for the human's approval
+- **Payouts** (`/v1/payments/payouts`) to pay data providers after each tab settlement
 - **AP2 concepts:** signed IntentMandate, user signature, and the mandate hash stamped into each capture's `invoice_id`
 
 **AI:**

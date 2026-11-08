@@ -54,6 +54,7 @@ From any live mandate, click **Run red-team suite** in Mission Control:
 | A8 | Use its token to revoke the human's root mandate | Token scope: authority only flows downward |
 | A9 | Keep spending after the kill switch | `MANDATE_ACTIVE` → DENY |
 | A10 | A sub-agent spends beyond **its own slice** while the parent still has money | `BUDGET_REMAINING` at the sub-mandate level → DENY |
+| A11 | Buy from an **impersonating storefront** (`paypa1-official.shop`) | Merchant identity (look-alike / impersonation detection) → DENY |
 | L1…Ln | Whatever the adversarial LLM tries | Same engine, same rules |
 
 4. **Crash Test.** Writ runs a **boundary matrix generated from this mandate's own clauses** through the real engine and attenuation code. It's deterministic and moves no money. Typical cases:
@@ -92,6 +93,11 @@ It's re-verified on every request, and anyone can check it offline with the embe
 
 ## Try it (judges: about 3 minutes)
 
+> **The flagship mission** (`/demo`, first scenario) shows everything in one mandate: *"Research the best cloud infrastructure for our AI product. $100 total: buy research data, plus a USB-C hub and a webcam. Ask me before anything over $40. Nothing from Amazon."*
+> 1. An orchestrator delegates to a research agent that **pays for data per call on a Writ Tab**, and to hardware agents that **buy real products**.
+> 2. Every action runs under one signed mandate and **one PayPal hold**.
+> 3. Then run the red-team suite, and open Forensics on the manipulated data provider.
+
 1. Open **https://mandate-xvwm.onrender.com/demo**. On the free hosting tier, the first load after idle can take up to a minute.
 2. Pick **Procurement** or **Team of agents** → **Prefill** → **Compile policy**.
 3. On the review screen:
@@ -125,6 +131,7 @@ Agents also pay for data: filings, market data, premium search, research databas
 3. The **same policy engine evaluates the call at every level of the delegation chain**: budget, per-call cap, approval line, provider blocks, categories.
 4. Approved calls get a **signed short-lived receipt**, which the provider checks before returning data.
 5. Charges **accrue on a tab** and **settle as one real PayPal partial capture** from the root hold, at $1.00 or when the mandate closes. Micro-charges aren't economical one by one.
+6. Each settlement **pays the providers their share through PayPal Payouts**: one batch, grouped per provider.
 
 A tab can never become a way around the mandate. A research sub-agent's 5-cent calls are bounded by its own slice, its parent's limits and the human's rules. **The providers are simulated in the sandbox; the PayPal settlement and refunds are real.**
 
@@ -148,6 +155,19 @@ When something goes wrong, `GET /api/purchases/{id}/forensics` rebuilds the **ev
 - provider response **FAIL** (injection detected)
 
 The verdict was **provider at fault**, recommending a refund, with high confidence and every claim cited.
+
+### Know Your Merchant
+The `MERCHANT_BLOCK` rule also catches **look-alike and impersonating merchants**:
+- homoglyph or typo look-alikes of merchants you blocked (`amaz0n`, `arnazon`)
+- impersonation of major retail and payment brands (`paypa1-official.shop`, `bestbuy-outlet.shop`, `amazon.com.deals.example`)
+
+Brands' real domains, including country TLDs, stay allowed. In testing it produced **0 false positives on 28 real merchants**.
+
+### Autonomy profiles
+**Careful**, **Balanced** and **Autopilot** are one-click presets for how often agents must ask you. A profile **can never loosen a limit you wrote yourself**: the deterministic cross-check re-reads your words, so "ask me above $40" stays $40 even on Autopilot.
+
+### Missions from a photo, or by voice
+Snap a photo of the item. The model identifies it and *suggests* a mission sentence, and you edit and compile it as usual. You can also dictate the mission. Nothing is bought from a photo directly.
 
 ### Agent Passport
 `GET /api/agents/{id}/passport` returns a **signed, scoped credential** for any agent:
@@ -301,6 +321,8 @@ tests/**                  Vitest suites
 - **Product data:** Channel3 doesn't provide delivery estimates, so they're deterministic per merchant. Ratings are often missing.
 - **Back-translation** is a deterministic cross-check, not a second model.
 - **Writ Tab providers are simulated** (signed 402 challenges, synthetic data); settlement and refunds are real PayPal sandbox operations. Dispute packs are signed and exported, not filed through the Disputes API.
+- **Photo input** uses the same OpenAI-compatible model with an image part. Its suggestions are editable and never auto-submitted.
+- **Payouts** go to placeholder sandbox receivers (UNCLAIMED until claimed); the batches are real Payouts API calls.
 - **Not built yet** (roadmap): full AP2 Cart/Payment mandate chain, filing disputes via the Disputes API, phone approvals, earned autonomy, nightly scheduled red-team runs, merchant SDK and badge, A2A/ACP/UCP adapters, Vault recurring mandates, Payouts settlement.
 
 ## License

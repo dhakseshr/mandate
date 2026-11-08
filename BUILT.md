@@ -164,6 +164,28 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 - A signed authority statement: delegation chain to the human, limits, spent, status, PayPal backing, latest certificate.
 - Verifiable via `/api/verify?check`.
 
+### 3.14 Know Your Merchant ✅ Tested
+- Look-alike and impersonation detection inside `MERCHANT_BLOCK`.
+- 0 false positives on 28 real merchants.
+- Red-team A11, plus crash-test cases.
+
+### 3.15 Autonomy profiles ✅ Tested
+- Careful, Balanced and Autopilot presets.
+- A profile never loosens a stated limit.
+- The compiler can't set the profile.
+
+### 3.16 Provider payouts ✅ Tested
+- Each tab settlement pays providers through a PayPal Payouts batch, grouped per provider.
+- Tested: a real sandbox batch, PENDING.
+
+### 3.17 Photo → mission ✅ Tested
+- `/api/vision` identified a real product photo with HIGH confidence and suggested a mission.
+
+### 3.18 Flagship mission ✅ Tested
+- Research agent on the tab, plus hardware agents.
+- One mandate, one hold, the cross-check restored the Amazon block.
+- **35 tests.**
+
 ### 3.13 Voice input ✅
 - Mission dictation in the composer (Web Speech API). It never auto-submits.
 
