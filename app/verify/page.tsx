@@ -10,7 +10,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
       <header className="grid grid-cols-1 gap-6 pb-10 pt-2 sm:pt-6 lg:grid-cols-12 lg:gap-10">
         <div className="min-w-0 lg:col-span-8">
           <span className="label">For merchants · order verification</span>
-          <h1 className="display mt-6 text-balance text-[2.5rem] leading-[1.02] tracking-[-0.025em] text-ink sm:text-[3.5rem]">
+          <h1 className="display-lg mt-6 text-ink">
             Is this agent order authorized?
           </h1>
           <p className="mt-5 max-w-[38rem] text-pretty text-[17px] leading-[1.55] text-muted">

@@ -153,7 +153,7 @@ export default function DemoPage() {
       <header className="grid grid-cols-1 gap-6 pb-16 pt-2 sm:pt-6 lg:grid-cols-12 lg:gap-10">
         <div className="min-w-0 lg:col-span-8">
           <span className="label">Guided demo · PayPal sandbox · the financial permission layer for autonomous AI</span>
-          <h1 className="display mt-6 text-balance text-[2.5rem] leading-[1.02] tracking-[-0.025em] text-ink sm:text-[3.5rem]">
+          <h1 className="display-lg mt-6 text-ink">
             Watch an agent shop on a leash.
           </h1>
           <p className="mt-5 max-w-[36rem] text-pretty text-[17px] leading-[1.55] text-muted">

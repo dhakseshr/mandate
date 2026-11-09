@@ -118,7 +118,7 @@ export function PassportView({ id }: { id: string }) {
             ← Mandate <span className="num normal-case tracking-normal">№ {p.agent.id}</span>
           </Link>
         </div>
-        <h1 className="display mt-5 max-w-[44rem] text-balance text-[2.25rem] leading-[1.04] tracking-[-0.025em] text-ink sm:text-[3.25rem]">
+        <h1 className="display-lg mt-5 max-w-[50rem] text-ink">
           What this agent may spend, and who said so.
         </h1>
         <p className="mt-4 max-w-[38rem] text-[15px] leading-relaxed text-muted">

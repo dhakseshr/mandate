@@ -180,7 +180,7 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
             ← Mandate <span className="num normal-case tracking-normal">№ {purchase.mandate_id}</span>
           </Link>
         </div>
-        <h1 className="display mt-5 max-w-[48rem] text-balance text-[2.25rem] leading-[1.04] tracking-[-0.025em] text-ink sm:text-[3.25rem]">
+        <h1 className="display-lg mt-5 max-w-[54rem] text-ink">
           An authorized payment isn&apos;t the same as a correct one.
         </h1>
         <p className="num mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px] text-muted">

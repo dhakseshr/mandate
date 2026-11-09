@@ -116,7 +116,7 @@ export function MandateScreen({ id }: { id: string }) {
 
         {reviewing ? (
           <div className="mt-5">
-            <h1 className="display text-balance text-[2.75rem] leading-[0.98] tracking-[-0.03em] sm:text-[4.25rem]">You are signing <em>this.</em></h1>
+            <h1 className="display-lg">You are signing <em>this.</em></h1>
             <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-muted">
               Read the clauses below. Click any one to amend it. Nothing moves until you approve the hold on PayPal.
             </p>
