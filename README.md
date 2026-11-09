@@ -570,7 +570,7 @@ lib/paypal/*              REST client, budget envelope, Agent Toolkit wrapper
 lib/channel3/*            product search client
 lib/ai/provider.ts        model selection and resilient wrapper
 lib/db/*                  Drizzle schema and client
-components/**             "Signed Instrument" UI
+components/**             "Intaglio" UI (docs/DESIGN.md)
 drizzle/                  SQL migrations
 scripts/                  migrate, PayPal spike, try-* developer scripts
 tests/**                  Vitest suites
@@ -580,15 +580,15 @@ render.yaml               Render Blueprint
 
 ## Design system
 
-The UI follows one idea, **"The Signed Instrument"**: a mandate should look and feel like a legal document you sign, not a dashboard.
+The UI follows one idea, **"Intaglio"**: a mandate is a financial instrument, so Writ is printed like one, in the language of security printing. The full mood board, principles and asset licences are in [docs/DESIGN.md](docs/DESIGN.md).
 
-- **Paper and ink** colour tokens, with a dark mode.
-- **Type:** Newsreader (display), IBM Plex Sans (body), IBM Plex Mono (numbers and hashes).
-- **Square corners**, § numbered clauses, an amount written out in words, a perforated stub holding the signature.
-- **Rubber-stamp verdicts** (ALLOWED / ESCALATED / DENIED) and a guilloche seal for signed documents.
+- **Every signed thing has its own face.** A guilloche rosette is generated from the mandate's sha256 ([components/rosette.tsx](components/rosette.tsx)), and unsigned instruments carry a faint VOID pantograph.
+- **Decisions are stamped; final acts are punched.** DENIED, VOID and REVOKED are punch-cancelled, like a cashed cheque ([components/punch.tsx](components/punch.tsx)).
+- **Type:** Bodoni Moda (display), Archivo (text and condensed labels), IBM Plex Mono (figures). All are SIL OFL.
 - **Colour only carries meaning:** PayPal blue for PayPal money; green, amber and red for verdicts.
-- **Four animations only:** ink-in, a stamp landing, a hold releasing, and draw-in.
-- Works at phone width.
+- **The landing bench** runs the real `evaluate()` from `lib/policy/engine.ts` in the browser.
+- **Sourced textures (CC0):** an 1863 American Bank Note Co. lathe-work border (Wikimedia Commons) and ambientCG paper grain.
+- Light and dark mode (OS preference or the header toggle), works at phone width, and respects `prefers-reduced-motion`.
 
 Shared primitives are in [components/ui.tsx](components/ui.tsx).
 
