@@ -195,7 +195,8 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
       </header>
 
       {/* The three questions */}
-      <section aria-labelledby="q-h" className="border border-ink/80 bg-surface shadow-paper">
+      <section aria-labelledby="q-h" className="border border-ink bg-surface shadow-paper">
+        <div aria-hidden className="lathe mx-3 mt-3 h-[14px] text-ink/85 sm:mx-4" />
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5 sm:px-5">
           <h2 id="q-h" className="label text-ink">Three questions · checked by code</h2>
           <span className="label text-muted">{det.length} deterministic checks</span>

@@ -126,7 +126,8 @@ export function PassportView({ id }: { id: string }) {
         </p>
       </header>
 
-      <article className="mx-auto max-w-[760px] border border-ink/80 bg-surface shadow-paper" aria-label={`Passport for ${p.agent.name}`}>
+      <article className="mx-auto max-w-[760px] border border-ink bg-surface shadow-paper" aria-label={`Passport for ${p.agent.name}`}>
+        <div aria-hidden className="lathe mx-3 mt-3 h-[16px] text-ink/85 sm:mx-4" />
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5 sm:px-6">
           <span className="label text-ink">Writ · agent financial passport</span>
           <span className="label text-muted">
