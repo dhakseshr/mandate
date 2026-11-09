@@ -124,7 +124,7 @@ export function MandateScreen({ id }: { id: string }) {
         ) : (
           <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="min-w-0">
-              <h1 className="display text-balance text-[2rem] leading-[1.05] tracking-[-0.025em] sm:text-[2.75rem]">{goal}</h1>
+              <h1 className={cn("display max-w-[52rem] text-balance leading-[1.06] tracking-[-0.025em]", goal.length > 110 ? "text-[1.6rem] sm:text-[2.1rem]" : "text-[2rem] sm:text-[2.75rem]")}>{goal}</h1>
               {showQuote && (
                 <p className="display mt-3 max-w-[70ch] text-pretty text-lg italic leading-snug text-muted">“{mandate.rawText}”</p>
               )}

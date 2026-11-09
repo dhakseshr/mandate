@@ -116,9 +116,9 @@ export function Envelope({
           </div>
 
           {closed && released > 0 && (
-            <span className="pointer-events-none absolute -top-3 right-2 sm:right-4">
-              <span className="flex items-center gap-2 bg-surface px-2 py-1.5">
-                <Punch text="VOID" dot={4} tone="paypal" animate delay={520} label="Void: the remainder was returned" />
+            <span className="pointer-events-none absolute right-2 top-[14px] -translate-y-1/2 sm:right-4">
+              <span className="flex items-center gap-2 border border-paypal/40 bg-surface px-2 py-1">
+                <Punch text="VOID" dot={3} tone="paypal" animate delay={520} label="Void: the remainder was returned" />
                 <span className="label text-[10px] text-paypal">Returned</span>
               </span>
             </span>
