@@ -195,12 +195,12 @@ export function Bench() {
             className="price-range mt-1"
             aria-valuetext={`${usd(unit)} per item`}
           />
-          <div className="num relative h-4 text-[10px] text-muted" aria-hidden>
-            <span className="absolute -translate-x-1/2" style={{ left: `${(80 / 399) * 100}%` }}>
-              ▲ $80 line
+          <div className="num relative h-4 overflow-hidden text-[10px]" aria-hidden>
+            <span className="absolute border-l border-escalate pl-1 text-escalate" style={{ left: `${((80 - 1) / 399) * 100}%` }}>
+              $80
             </span>
-            <span className="absolute -translate-x-1/2" style={{ left: `${(120 / 399) * 100}%` }}>
-              <span className="pl-10">▲ $120 cap</span>
+            <span className="absolute border-l border-deny pl-1 text-deny" style={{ left: `${((120 - 1) / 399) * 100}%` }}>
+              $120 cap
             </span>
           </div>
         </div>
@@ -241,15 +241,13 @@ export function Bench() {
             {result.checks.map((c, i) => (
               <li
                 key={c.rule}
-                className={cn("animate-ink grid grid-cols-[1.1rem_minmax(0,1fr)] gap-x-1 border-b border-line/70 py-[5px]", tone(c.verdict))}
+                className={cn("animate-ink grid grid-cols-[1.1rem_auto_minmax(0,1fr)] gap-x-1 border-b border-line/70 py-[5px]", tone(c.verdict))}
                 style={{ animationDelay: `${i * 28}ms` }}
                 title={c.message}
               >
                 <span aria-label={c.verdict}>{glyph(c.verdict)}</span>
-                <span className="truncate">
-                  <span className={c.verdict === "ALLOW" ? "text-ink" : "font-medium"}>{c.rule}</span>
-                  {c.verdict !== "ALLOW" && <span className="text-muted"> · {c.message}</span>}
-                </span>
+                <span className={c.verdict === "ALLOW" ? "text-ink" : "font-medium"}>{c.rule}</span>
+                <span className="min-w-0 truncate text-muted">{c.verdict !== "ALLOW" ? ` · ${c.message}` : ""}</span>
               </li>
             ))}
           </ol>

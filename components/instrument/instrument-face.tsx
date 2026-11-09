@@ -76,16 +76,18 @@ export function InstrumentFace({
   const stubContent = stub ?? (signed ? <SignatureLine signedAt={mandate.signedAt} hash={mandate.signatureHash} method={mandate.signedWith} intentHash={mandate.passkeyIntentHash} /> : null);
 
   return (
-    <article className={cn("border border-line bg-surface text-ink shadow-paper", className)} aria-label={`Mandate ${mandate.id}`}>
-      {/* Header strip */}
-      <header {...ink(cn("flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line py-3", px))}>
+    <article className={cn("border border-ink bg-surface text-ink shadow-paper", className)} aria-label={`Mandate ${mandate.id}`}>
+      {/* ABNC lathe-work border (CC0) — the engraved edge of a real certificate. */}
+      {!compact && <div aria-hidden className="lathe mx-3 mt-3 h-[18px] text-ink/85 sm:mx-4" />}
+      {/* Header strip: title left, serial plate right (cf. Eidgenössische Bank, 1893). */}
+      <header {...ink(cn("flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3", px))}>
         <span className="flex items-baseline gap-3">
           <span className="label text-ink">Mandate</span>
           <span className="label hidden text-muted sm:inline">Limited authority to purchase</span>
         </span>
-        <span className="num text-xs text-muted">
-          № <span className="text-ink">{mandate.id}</span>
-          {drafted && <span className="hidden sm:inline"> · drafted {drafted}</span>}
+        <span className="flex items-center gap-2">
+          {drafted && <span className="label hidden text-[10px] text-muted sm:inline">Drafted {drafted}</span>}
+          <span className="num border border-ink px-2 py-1 text-xs text-ink">№ {mandate.id}</span>
         </span>
         {(mandate.parentId || headerExtra) && (
           <span className="label flex basis-full flex-wrap gap-x-4 gap-y-1 text-muted">
@@ -106,10 +108,13 @@ export function InstrumentFace({
             <span className="label text-muted">Pay up to</span>
             <p className={cn("mt-2 text-sm text-muted", compact && "hidden")}>captured only from a PayPal hold</p>
           </div>
-          <div className="guilloche border border-line px-4 py-2 sm:min-w-[15rem] sm:text-right">
+          <div className={cn("safety relative border border-ink px-4 py-2.5 sm:min-w-[15rem] sm:text-right", !signed && "void-pantograph")}>
             <span className={cn("num block font-medium leading-none tracking-tight text-ink", compact ? "text-3xl" : "text-5xl sm:text-6xl")}>
               {usd(amount)}
             </span>
+            {!compact && (
+              <span className="label mt-1.5 block text-[9px] tracking-[0.18em] text-muted">{signed ? "Signed · held by PayPal" : "Void until signed"}</span>
+            )}
           </div>
         </div>
         <p className="mt-3 border-b border-ink/70 pb-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted" aria-label={`Amount in words: ${amountInWords(amount)}`}>
@@ -289,9 +294,9 @@ export function SignatureLine({
   return (
     <div className={cn("flex items-end gap-4", className)}>
       {hash ? (
-        <Seal hash={hash} size={64} />
+        <Seal hash={hash} size={72} animate />
       ) : (
-        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-dashed border-muted/60 text-center" aria-hidden>
+        <span className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full border border-dashed border-muted/70 text-center" aria-hidden>
           <span className="label text-[8px] leading-tight text-muted">Seal at<br />signing</span>
         </span>
       )}

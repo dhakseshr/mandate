@@ -25,7 +25,7 @@ export function Ap2Seal({ id, hash, className }: { id: string; hash: string | nu
   const h = hash.replace(/^0x/, "");
   return (
     <div className={cn("flex items-center gap-4", className)}>
-      <Seal hash={h} size={72} />
+      <Seal hash={h} size={80} animate />
       <div className="min-w-0 space-y-1.5">
         <p className="label text-muted">AP2 intent mandate</p>
         <p className="label" aria-live="polite">

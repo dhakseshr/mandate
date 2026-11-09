@@ -7,13 +7,13 @@ export const DEMO_HASH = "7a3fc9e1b04d5a28f6c3e9170b2d84ac5f1e6b93d0a7c2e4f8b196
 
 export function Hero() {
   return (
-    <section className="relative isolate min-w-0 pb-14 pt-2 sm:pt-6 lg:pb-20" aria-labelledby="hero-title">
+    <section className="relative isolate min-w-0 overflow-x-clip pb-14 pt-2 sm:pt-6 lg:pb-20" aria-labelledby="hero-title">
       {/* Engraved rosette of the example mandate — the face this one hash always draws. */}
       <div aria-hidden className="pointer-events-none absolute -right-24 -top-2 -z-10 hidden opacity-50 md:block lg:-right-10">
         <Rosette hash={DEMO_HASH} size={560} animate duration={2400} strength={0.7} />
       </div>
-      <div aria-hidden className="pointer-events-none absolute -right-24 top-6 -z-10 opacity-40 md:hidden">
-        <Rosette hash={DEMO_HASH} size={300} animate duration={2000} strength={0.6} />
+      <div aria-hidden className="pointer-events-none absolute right-0 top-10 -z-10 opacity-40 md:hidden">
+        <Rosette hash={DEMO_HASH} size={240} animate duration={2000} strength={0.6} />
       </div>
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-line pb-3">
@@ -55,13 +55,13 @@ export function Hero() {
             Or describe your own mission
           </a>
         </div>
-        <dl className="grid min-w-0 grid-cols-3 gap-4 border-t border-ink pt-3 lg:col-span-3 lg:grid-cols-1 lg:gap-0 lg:border-t-0 lg:pt-0">
+        <dl className="grid min-w-0 grid-cols-1 border-t border-ink sm:grid-cols-3 sm:gap-4 sm:pt-3 lg:col-span-3 lg:grid-cols-1 lg:gap-0 lg:border-t-0 lg:pt-0">
           {[
             ["Decided by", "13 rules, no model"],
             ["Money held by", "PayPal"],
             ["Signed with", "Passkey · Ed25519"],
           ].map(([k, val]) => (
-            <div key={k} className="min-w-0 lg:border-t lg:border-ink lg:py-2.5">
+            <div key={k} className="flex min-w-0 items-baseline justify-between gap-4 border-b border-line py-2.5 sm:block sm:border-b-0 sm:py-0 lg:border-t lg:border-ink lg:py-2.5">
               <dt className="label text-[10px] text-muted">{k}</dt>
               <dd className="mt-1.5 text-[14px] text-ink">{val}</dd>
             </div>

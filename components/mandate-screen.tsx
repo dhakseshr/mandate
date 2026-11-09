@@ -84,7 +84,7 @@ export function MandateScreen({ id }: { id: string }) {
 
   return (
     <div className={cn("space-y-8", reviewing && "mx-auto max-w-[800px]")}>
-      <header className="animate-ink border-b border-line pb-6">
+      <header className="animate-ink border-b border-ink pb-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="label text-muted">
             Mandate <span className="num normal-case tracking-normal text-ink">№ {mandate.id}</span>
@@ -116,7 +116,7 @@ export function MandateScreen({ id }: { id: string }) {
 
         {reviewing ? (
           <div className="mt-5">
-            <h1 className="display text-balance text-4xl leading-[1.05] sm:text-5xl">You are signing this.</h1>
+            <h1 className="display text-balance text-[2.75rem] leading-[0.98] tracking-[-0.03em] sm:text-[4.25rem]">You are signing <em>this.</em></h1>
             <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-muted">
               Read the clauses below. Click any one to amend it. Nothing moves until you approve the hold on PayPal.
             </p>
@@ -124,7 +124,7 @@ export function MandateScreen({ id }: { id: string }) {
         ) : (
           <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="min-w-0">
-              <h1 className="display text-balance text-3xl leading-[1.1] sm:text-4xl">{goal}</h1>
+              <h1 className="display text-balance text-[2rem] leading-[1.05] tracking-[-0.025em] sm:text-[2.75rem]">{goal}</h1>
               {showQuote && (
                 <p className="display mt-3 max-w-[70ch] text-pretty text-lg italic leading-snug text-muted">“{mandate.rawText}”</p>
               )}

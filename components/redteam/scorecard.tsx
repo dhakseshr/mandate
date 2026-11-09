@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { Stamp, cn, usd } from "../ui";
+import { Seal, Stamp, cn, usd } from "../ui";
+import { Punch } from "../punch";
 import { CopyId, hhmmss, type Ev } from "../log/shared";
 import type { AttackResult, Certificate, CrashTest, Scorecard as SC, Snapshot } from "./suite";
 
@@ -161,32 +162,50 @@ export function CrashMatrix({ t, bare = false }: { t: CrashTest; bare?: boolean 
 
 function CertificateLine({ c, rootId }: { c: Certificate; rootId: string }) {
   if (!c.url && !c.sha256) return null;
+  const sha = c.sha256?.replace(/^0x/, "") ?? null;
+  const passed = c.result === "PASSED";
   return (
-    <div className="flex flex-col gap-2 border-t border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[13px]">
-        <span className="label text-[10px] text-ink">Assurance certificate</span>
-        {c.result && (
-          <span className={cn("label rounded-[2px] border px-1.5 py-[3px] text-[10px]", c.result === "PASSED" ? "border-allow/60 text-allow" : "border-deny/60 text-deny")}>
-            {c.result}
-          </span>
-        )}
-        {c.sha256 && (
-          <span className="num text-muted">
-            · signed <span className="text-ink">#{c.sha256.replace(/^0x/, "").slice(0, 8)}</span>
-          </span>
-        )}
-        {c.id && <span className="num text-muted">· № {c.id}</span>}
-      </p>
-      <p className="flex gap-4 text-[13px]">
-        {c.url && (
-          <a href={`${c.url}${c.url.includes("?") ? "&" : "?"}download`} download className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
-            Download
+    <div className="border-t border-ink bg-surface-2/50 px-4 py-5 sm:px-6">
+      <div className="grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-8">
+        {sha ? <Seal hash={sha} size={96} label="WRIT · ASSURANCE" animate /> : null}
+        <div className="min-w-0">
+          <p className="label text-[10px] text-muted">Assurance certificate{c.id && <span className="num ml-2 normal-case tracking-normal text-ink">№ {c.id}</span>}</p>
+          <p className="display mt-2 text-[1.5rem] leading-tight text-ink">
+            This exact mandate was attacked{c.result ? <>, and it <em>{passed ? "held" : "did not hold"}</em>.</> : "."}
+          </p>
+          <p className="num mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[12px] text-muted">
+            {c.result && (
+              <span className={cn("label rounded-[2px] border px-1.5 py-[3px] text-[10px]", passed ? "border-allow/60 text-allow" : "border-deny/60 text-deny")}>
+                {c.result}
+              </span>
+            )}
+            {sha && (
+              <span>
+                Ed25519-signed <span className="text-ink">#{sha.slice(0, 8)}</span> · verifiable offline with the embedded key
+              </span>
+            )}
+          </p>
+        </div>
+        <p className="flex gap-2 text-[13px] sm:flex-col sm:items-stretch">
+          {c.url && (
+            <a
+              href={`${c.url}${c.url.includes("?") ? "&" : "?"}download`}
+              download
+              className="inline-flex min-h-11 items-center justify-center bg-ink px-4 font-medium text-on-accent hover:bg-ink/90"
+            >
+              Download
+            </a>
+          )}
+          <a
+            href={c.url ?? `/verify?mandate=${encodeURIComponent(rootId)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-11 items-center justify-center border border-ink px-4 font-medium text-ink hover:bg-surface"
+          >
+            Verify
           </a>
-        )}
-        <a href={c.url ?? `/verify?mandate=${encodeURIComponent(rootId)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
-          Verify
-        </a>
-      </p>
+        </p>
+      </div>
     </div>
   );
 }
@@ -202,7 +221,8 @@ export function Scorecard({ e, s, children }: { e: Ev; s: SC; children?: React.R
   const clean = s.breaches === 0;
   const took = duration(s.paypal.before?.fetched_at, s.paypal.after?.fetched_at);
   return (
-    <section id="redteam-scorecard" aria-labelledby={`sc-${e.id}`} className="scroll-mt-24 border border-ink/80 bg-surface shadow-paper">
+    <section id="redteam-scorecard" aria-labelledby={`sc-${e.id}`} className="scroll-mt-24 border border-ink bg-surface shadow-paper">
+      <div aria-hidden className="lathe mx-3 mt-3 h-[16px] text-ink/85 sm:mx-4" />
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-2 sm:px-6">
         <span className="label text-[10px] text-ink">Red-team scorecard<span className="hidden sm:inline"> · signed sub-mandate · real tool paths</span></span>
         <span className="label text-[10px] text-muted">
@@ -253,9 +273,11 @@ export function Scorecard({ e, s, children }: { e: Ev; s: SC; children?: React.R
 
         <div className="flex flex-col items-start gap-4 md:items-end md:justify-between">
           {clean ? (
-            <Stamp verdict="DENY" size="lg" animate rotate={-5} className="px-4 text-[2.25rem] sm:px-5 sm:text-5xl">
-              0 breaches
-            </Stamp>
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <Punch text="0 BREACHES" dot={5} tone="ink" animate label="Zero breaches" className="hidden sm:block" />
+              <Punch text="0 BREACHES" dot={3} tone="ink" animate label="Zero breaches" className="sm:hidden" />
+              <span className="label text-[10px] text-muted">Every attempt stopped by code</span>
+            </div>
           ) : (
             <Stamp verdict="DENY" size="lg" animate rotate={-5} className="px-4 text-[2.25rem] sm:text-5xl">
               Breach

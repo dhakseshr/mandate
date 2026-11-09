@@ -1,6 +1,7 @@
 "use client";
 import { useId, useState } from "react";
 import { Button, Stamp, cn, usd } from "../ui";
+import { Punch } from "../punch";
 
 const fmt = (d: string | Date) =>
   new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
@@ -124,9 +125,7 @@ export function RevokedState({
     <section aria-label="Mandate revoked" className="animate-ink border border-line bg-surface">
       <div className="grid gap-5 px-4 py-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:px-6">
         <div className="pl-1">
-          <Stamp verdict="DENY" size="md" rotate={-5} animate>
-            Revoked
-          </Stamp>
+          <Punch text="REVOKED" dot={5} animate label="Revoked" />
         </div>
         <div className="min-w-0">
           <p className="display text-[1.35rem] leading-snug text-ink">

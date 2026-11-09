@@ -136,7 +136,7 @@ export function PassportView({ id }: { id: string }) {
 
         <div className="grid gap-6 px-4 py-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:px-6">
           <div className="flex items-start gap-4 sm:flex-col sm:items-center">
-            <Seal hash={proof.sha256} size={112} label="WRIT · PASSPORT" />
+            <Seal hash={proof.sha256} size={128} label="WRIT · PASSPORT" animate />
             <Stamp verdict={st.v} rotate={-5} size="md" className={cn(st.ink && "border-ink text-ink")}>{st.text}</Stamp>
           </div>
           <dl className="grid min-w-0 grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-[13px]">

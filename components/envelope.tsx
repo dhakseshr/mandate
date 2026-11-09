@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Stamp, cn, usd } from "./ui";
+import { cn, usd } from "./ui";
+import { Punch } from "./punch";
 
 export type EnvelopeProps = {
   /** The PayPal authorization (hold) amount. */
@@ -116,9 +117,10 @@ export function Envelope({
 
           {closed && released > 0 && (
             <span className="pointer-events-none absolute -top-3 right-2 sm:right-4">
-              <Stamp verdict="VOID" size="md" animate rotate={-5} className="bg-surface/85 [animation-delay:520ms]">
-                VOID · RETURNED
-              </Stamp>
+              <span className="flex items-center gap-2 bg-surface px-2 py-1.5">
+                <Punch text="VOID" dot={4} tone="paypal" animate delay={520} label="Void: the remainder was returned" />
+                <span className="label text-[10px] text-paypal">Returned</span>
+              </span>
             </span>
           )}
         </div>

@@ -1,5 +1,6 @@
 "use client";
-import { Stamp, usd } from "../ui";
+import { usd } from "../ui";
+import { Punch } from "../punch";
 import { det, hhmmss, type Check, type Ev, type Injection, type LogProduct } from "./shared";
 
 /**
@@ -22,7 +23,7 @@ export function AttackPanel({ e, held, closed }: { e: Ev; held: number; closed: 
     <section
       key={e.id}
       aria-labelledby={`atk-${e.id}`}
-      className="animate-impression relative overflow-hidden border border-deny/50 bg-surface"
+      className="animate-impression relative overflow-hidden border-2 border-deny bg-surface"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2 sm:px-6">
         <span className="label text-[10px] text-deny">Prompt injection · stopped by policy engine</span>
@@ -33,9 +34,8 @@ export function AttackPanel({ e, held, closed }: { e: Ev; held: number; closed: 
 
       <div className="grid gap-x-10 gap-y-5 px-4 pb-5 pt-5 sm:px-6 sm:pb-6 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="md:col-start-2 md:row-start-1 md:justify-self-end">
-          <Stamp verdict="DENY" size="lg" animate rotate={-4}>
-            DENIED
-          </Stamp>
+          <Punch text="DENIED" dot={9} animate delay={200} label="Denied" className="hidden sm:block" />
+          <Punch text="DENIED" dot={6} animate delay={200} label="Denied" className="sm:hidden" />
         </div>
         <div className="min-w-0 md:col-start-1 md:row-span-2 md:row-start-1">
           <h2 id={`atk-${e.id}`} className="display text-[2.15rem] leading-[1.02] text-ink sm:text-5xl">

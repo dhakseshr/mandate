@@ -192,7 +192,7 @@ body {
 
 /* === Agent A additions === */
 /* Hero display size (spec: clamp(3rem,7vw,5.5rem)/0.95, -0.025em). Capped by column width on large screens. */
-.display-xl { font-family: var(--font-bodoni), "Bodoni 72", Didot, Georgia, serif; font-weight: 400; font-size: clamp(3rem, 9vw, 8.25rem); line-height: 0.92; letter-spacing: -0.035em; font-weight: 460; font-variation-settings: "opsz" 12; }
+.display-xl { font-family: var(--font-bodoni), "Bodoni 72", Didot, Georgia, serif; font-weight: 400; font-size: clamp(2.45rem, 9vw, 8.25rem); line-height: 0.95; letter-spacing: -0.035em; font-weight: 460; font-variation-settings: "opsz" 12; }
 /* Ruled field: text sits on the 28px rules of .ruled. */
 .ruled-field { line-height: 28px; padding-top: 4px; background-position: 0 4px; }
 /* MICR-style footer band on an instrument. */
@@ -276,5 +276,5 @@ body { background-image: url("/textures/paper-grain.webp"); background-size: 384
 .lathe-flip { transform: scaleY(-1); }
 /* Void pantograph: faint repeating VOID behind an unsigned amount. */
 .void-pantograph {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='30'%3E%3Ctext x='4' y='21' font-family='monospace' font-size='15' font-weight='700' letter-spacing='3' fill='%23888' fill-opacity='0.22' transform='rotate(-8 42 15)'%3EVOID%3C/text%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='30'%3E%3Ctext x='4' y='21' font-family='monospace' font-size='15' font-weight='700' letter-spacing='3' fill='%23888' fill-opacity='0.13' transform='rotate(-8 42 15)'%3EVOID%3C/text%3E%3C/svg%3E");
 }

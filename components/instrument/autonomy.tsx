@@ -66,9 +66,7 @@ export function AutonomyChoice({
                 on ? "border-ink bg-surface" : "border-line hover:border-ink/40",
               )}
             >
-              <span className={cn("mt-[3px] grid h-3.5 w-3.5 shrink-0 place-items-center border", on ? "border-ink" : "border-muted")} aria-hidden>
-                {on && <span className="h-1.5 w-1.5 bg-ink" />}
-              </span>
+              <span className={cn("mt-[5px] h-3 w-3 shrink-0 rotate-45 border", on ? "border-ink bg-ink" : "border-muted")} aria-hidden />
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-ink">{title}</span>
                 <span className="block text-sm text-muted">{busy === key ? "Amending the clauses…" : sub}</span>
