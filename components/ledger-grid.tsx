@@ -221,7 +221,7 @@ export function LedgerGrid() {
       rowHoverColor: t.hover,
       selectedRowBackgroundColor: t.hover,
       accentColor: t.ink,
-      fontFamily: "var(--font-plex-sans)",
+      fontFamily: "var(--font-archivo)",
       cellFontFamily: "var(--font-plex-mono)",
       headerFontFamily: "var(--font-plex-mono)",
       headerFontWeight: 500,

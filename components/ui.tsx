@@ -1,7 +1,8 @@
-// Shared primitives for "The Signed Instrument" design system.
+// Shared primitives for the "Intaglio" design system (docs/DESIGN.md).
 // Rules: square corners (0 for surfaces, 2px for controls), ink is the brand, color only for meaning.
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Rosette } from "./rosette";
 
 export const cn = (...c: ClassValue[]) => twMerge(clsx(c));
 export const usd = (n: number | null | undefined) =>
@@ -136,32 +137,53 @@ export function Stamp({
   );
 }
 
-/** Round guilloche seal with the mandate hash around the rim. Renders nothing without a hash. */
-export function Seal({ hash, size = 64, className, label = "SIGNED · ED25519" }: { hash?: string | null; size?: number; className?: string; label?: string }) {
+/**
+ * The seal: a guilloche rosette engraved from the document's own hash, the hash around the rim, the serial on a clear plate.
+ * Same hash → same face. Renders nothing without a hash (unsigned documents show an empty ring instead).
+ */
+export function Seal({
+  hash,
+  size = 64,
+  className,
+  label = "SIGNED · ED25519",
+  animate = false,
+}: {
+  hash?: string | null;
+  size?: number;
+  className?: string;
+  label?: string;
+  /** Engrave on first view (reduced motion: drawn complete). */
+  animate?: boolean;
+}) {
   if (!hash) return null;
   const h = hash.replace(/^0x/, "");
   const rim = `${label} · ${h.slice(0, 24).toUpperCase()} · `;
-  const id = `seal-${h.slice(0, 8)}`;
+  const id = `seal-${h.slice(0, 8)}-${size}`;
+  const inner = Math.round(size * 0.68);
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-2 text-ink", className)} title={`Mandate signature sha256 ${h}`}>
-      <svg viewBox="0 0 100 100" width={size} height={size} aria-label={`Signed mandate ${h.slice(0, 8)}`}>
-        <defs>
-          <path id={id} d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
-        </defs>
-        <circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" strokeWidth="1" />
-        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.8" />
-        {Array.from({ length: 36 }, (_, i) => (
-          <ellipse key={i} cx="50" cy="50" rx="28" ry="9" fill="none" stroke="currentColor" strokeWidth="0.25" opacity="0.55" transform={`rotate(${i * 5} 50 50)`} />
-        ))}
-        <text fontSize="6.2" fontFamily="var(--font-plex-mono), monospace" letterSpacing="0.6" fill="currentColor">
-          <textPath href={`#${id}`}>{rim}</textPath>
-        </text>
-        {/* Clear plate behind the serial so the guilloche never collides with it. */}
-        <circle cx="50" cy="50" r="15.5" fill="var(--surface)" stroke="currentColor" strokeWidth="0.6" />
-        <text x="50" y="53.6" textAnchor="middle" fontSize="9.5" fontFamily="var(--font-plex-mono), monospace" fontWeight="600" letterSpacing="0.3" fill="currentColor">
-          {h.slice(0, 6).toUpperCase()}
-        </text>
-      </svg>
+      <span className="relative block" style={{ width: size, height: size }} role="img" aria-label={`Signed ${h.slice(0, 8)}`}>
+        <Rosette hash={h} size={inner} animate={animate} className="absolute" style={{ left: (size - inner) / 2, top: (size - inner) / 2 }} />
+        <svg viewBox="0 0 100 100" width={size} height={size} className="absolute inset-0" aria-hidden>
+          <defs>
+            <path id={id} d="M50,50 m-40.5,0 a40.5,40.5 0 1,1 81,0 a40.5,40.5 0 1,1 -81,0" />
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1.1" />
+          <circle cx="50" cy="50" r="46.2" fill="none" stroke="currentColor" strokeWidth="0.35" />
+          <text fontSize="6.4" fontFamily="var(--font-plex-mono), monospace" letterSpacing="0.55" fill="currentColor">
+            <textPath href={`#${id}`}>{rim}</textPath>
+          </text>
+          <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="0.6" />
+          {size >= 56 && (
+            <>
+              <circle cx="50" cy="50" r="11.5" fill="var(--surface)" stroke="currentColor" strokeWidth="0.6" />
+              <text x="50" y="53" textAnchor="middle" fontSize="8" fontFamily="var(--font-plex-mono), monospace" fontWeight="600" letterSpacing="0.2" fill="currentColor">
+                {h.slice(0, 4).toUpperCase()}
+              </text>
+            </>
+          )}
+        </svg>
+      </span>
     </span>
   );
 }

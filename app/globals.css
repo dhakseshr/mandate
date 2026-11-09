@@ -5,79 +5,89 @@
    rubber stamps for verdicts. Ink is the brand. Color only carries meaning:
    PayPal blue = real PayPal money states; green/amber/red = verdicts only.
    ────────────────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────────
+   "Intaglio" — Writ is printed like a financial instrument: security paper,
+   engraved ink, guilloche from the document's own hash, punch-cancellation for
+   final acts. Ink is the brand. Colour only carries meaning:
+   PayPal blue = real PayPal money states; green/amber/red = verdicts only.
+   See docs/DESIGN.md.
+   ────────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg: #f3f0e8;          /* paper desk */
-  --surface: #fbfaf6;     /* the instrument / cards */
-  --surface-2: #ece8de;   /* log well, table headers */
-  --border: #d8d2c4;      /* hairlines */
-  --rule: #e4dfd2;        /* ruled-paper texture */
-  --ink: #17150f;
-  --muted: #5c574c;       /* 6.3:1 on bg */
-  --faint: #8a8475;       /* decoration / >=18px only, never small body text */
-  --accent: #17150f;      /* primary actions are ink */
-  --accent-soft: #ece8de;
-  --on-accent: #fbfaf6;   /* text on ink buttons */
-  --allow: #1e6b47;
-  --allow-soft: #e3efe6;
-  --escalate: #9a5800;
-  --escalate-soft: #f6ebd6;
-  --deny: #b42318;
-  --deny-soft: #f8e4e0;
+  --bg: #eeebe1;          /* security paper */
+  --surface: #f8f6ef;     /* the instrument */
+  --surface-2: #e6e2d6;   /* log well, table heads */
+  --border: #d0cabb;      /* hairlines */
+  --rule: #e0dbcd;        /* ruled-paper texture */
+  --ink: #121210;
+  --muted: #55514a;       /* 6.9:1 on bg */
+  --faint: #8a8475;       /* decoration / >=18px only */
+  --accent: #121210;
+  --accent-soft: #e6e2d6;
+  --on-accent: #f8f6ef;
+  --allow: #1d6a45;
+  --allow-soft: #e1ede3;
+  --escalate: #94560a;
+  --escalate-soft: #f4e9d3;
+  --deny: #b3261e;
+  --deny-soft: #f6e2dd;
   --paypal: #0059b8;      /* money states only */
   --paypal-navy: #003087; /* the held amount */
-  --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(23 21 15 / 0.25);
+  --engrave: color-mix(in oklab, var(--ink) 62%, transparent);
+  --paper-shadow: 0 1px 0 var(--border), 0 24px 48px -30px rgb(18 18 16 / 0.32);
   --ease-ink: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-stamp: cubic-bezier(0.3, 1.6, 0.5, 1);
   color-scheme: light;
 }
 
-/* Night terminal (not inverted paper). Applied by OS preference unless forced light, or when forced dark. */
+/* Night press. Applied by OS preference unless forced light, or when forced dark. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e0e0c;
-    --surface: #171714;
-    --surface-2: #1d1d19;
-    --border: #2c2b26;
+    --bg: #0c0c0a;
+    --surface: #151512;
+    --surface-2: #1b1b17;
+    --border: #2e2d27;
     --rule: #1f1f1b;
-    --ink: #ede9df;
-    --muted: #a8a396;
-    --faint: #77736a;
-    --accent: #ede9df;
-    --accent-soft: #1d1d19;
-    --on-accent: #0e0e0c;
+    --ink: #ece7da;
+    --muted: #aaa497;
+    --faint: #78746a;
+    --accent: #ece7da;
+    --accent-soft: #1b1b17;
+    --on-accent: #0c0c0a;
     --allow: #5fc28e;
-    --allow-soft: #12251a;
+    --allow-soft: #11241a;
     --escalate: #e9a23b;
     --escalate-soft: #2a1f0c;
     --deny: #ff6f61;
     --deny-soft: #2e1411;
     --paypal: #5aa9ff;
-    --paypal-navy: #5aa9ff;
-    --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(0 0 0 / 0.6);
+    --paypal-navy: #7dbbff;
+    --engrave: color-mix(in oklab, var(--ink) 55%, transparent);
+    --paper-shadow: 0 1px 0 var(--border), 0 24px 48px -30px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e0e0c;
-  --surface: #171714;
-  --surface-2: #1d1d19;
-  --border: #2c2b26;
+  --bg: #0c0c0a;
+  --surface: #151512;
+  --surface-2: #1b1b17;
+  --border: #2e2d27;
   --rule: #1f1f1b;
-  --ink: #ede9df;
-  --muted: #a8a396;
-  --faint: #77736a;
-  --accent: #ede9df;
-  --accent-soft: #1d1d19;
-  --on-accent: #0e0e0c;
+  --ink: #ece7da;
+  --muted: #aaa497;
+  --faint: #78746a;
+  --accent: #ece7da;
+  --accent-soft: #1b1b17;
+  --on-accent: #0c0c0a;
   --allow: #5fc28e;
-  --allow-soft: #12251a;
+  --allow-soft: #11241a;
   --escalate: #e9a23b;
   --escalate-soft: #2a1f0c;
   --deny: #ff6f61;
   --deny-soft: #2e1411;
   --paypal: #5aa9ff;
-  --paypal-navy: #5aa9ff;
-  --paper-shadow: 0 1px 0 var(--border), 0 18px 40px -24px rgb(0 0 0 / 0.6);
+  --paypal-navy: #7dbbff;
+  --engrave: color-mix(in oklab, var(--ink) 55%, transparent);
+  --paper-shadow: 0 1px 0 var(--border), 0 24px 48px -30px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
@@ -101,8 +111,8 @@
   --color-deny-soft: var(--deny-soft);
   --color-paypal: var(--paypal);
   --color-paypal-navy: var(--paypal-navy);
-  --font-display: var(--font-newsreader), Georgia, serif;
-  --font-sans: var(--font-plex-sans), ui-sans-serif, sans-serif;
+  --font-display: var(--font-bodoni), "Bodoni 72", Didot, Georgia, serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --shadow-paper: var(--paper-shadow);
   --ease-ink: var(--ease-ink);
@@ -113,16 +123,18 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-plex-sans), ui-sans-serif, sans-serif;
-  font-feature-settings: "ss01";
+  font-family: var(--font-archivo), ui-sans-serif, sans-serif;
+  font-stretch: 100%;
 }
 
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 ::selection { background: color-mix(in oklab, var(--paypal) 25%, transparent); }
 
 /* ── Type roles ─────────────────────────────────────────────────────────── */
-.display { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-optical-sizing: auto; }
-.label { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.6875rem; line-height: 1; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+/* Bodoni Moda pinned to a low optical size: Didone character, hairlines sturdy enough for screens. */
+.display { font-family: var(--font-bodoni), "Bodoni 72", Didot, Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-variation-settings: "opsz" 18; }
+/* Banknote lettering: condensed caps. */
+.label { font-family: var(--font-archivo), ui-sans-serif, sans-serif; font-stretch: 78%; font-size: 0.75rem; line-height: 1; font-weight: 600; letter-spacing: 0.075em; text-transform: uppercase; }
 /* Money and IDs: monospace, tabular, never reflowing. */
 .num { font-family: var(--font-plex-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 
@@ -180,7 +192,7 @@ body {
 
 /* === Agent A additions === */
 /* Hero display size (spec: clamp(3rem,7vw,5.5rem)/0.95, -0.025em). Capped by column width on large screens. */
-.display-xl { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; font-size: clamp(2.75rem, 6.4vw, 5.5rem); line-height: 0.95; letter-spacing: -0.025em; font-optical-sizing: auto; }
+.display-xl { font-family: var(--font-bodoni), "Bodoni 72", Didot, Georgia, serif; font-weight: 400; font-size: clamp(3rem, 9vw, 8.25rem); line-height: 0.92; letter-spacing: -0.035em; font-weight: 460; font-variation-settings: "opsz" 12; }
 /* Ruled field: text sits on the 28px rules of .ruled. */
 .ruled-field { line-height: 28px; padding-top: 4px; background-position: 0 4px; }
 /* MICR-style footer band on an instrument. */
@@ -204,3 +216,65 @@ body {
 /* Passport: machine-readable zone footer. */
 .mrz { font-family: var(--font-plex-mono), ui-monospace, monospace; font-size: 0.75rem; line-height: 1.5; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; word-break: break-all; }
 /* === end Agent F === */
+
+/* === Intaglio additions (docs/DESIGN.md) === */
+/* Microprint: security-printing text band. Decorative (aria-hidden), readable when zoomed. */
+.microprint {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 7px; line-height: 1; letter-spacing: 0.22em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; color: var(--faint); user-select: none;
+}
+/* The boundary: a double hairline the money side never crosses. */
+.boundary-rule { border-top: 1px solid var(--ink); box-shadow: 0 3px 0 -2px var(--ink); }
+/* Cheque safety background: fine engraved diagonal, behind amounts only. */
+.safety {
+  background-image:
+    repeating-linear-gradient(115deg, color-mix(in oklab, var(--ink) 7%, transparent) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(65deg, color-mix(in oklab, var(--ink) 5%, transparent) 0 1px, transparent 1px 7px);
+}
+/* Small caps lettering for the wordmark rule. */
+.serial { font-family: var(--font-plex-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums slashed-zero; letter-spacing: 0.04em; }
+
+/* 5. Engrave: rosette lines are drawn by the canvas itself (see components/rosette.tsx). */
+/* 6. Punch: holes appear column by column. Delay set per column via style. */
+@keyframes punch-in {
+  0% { opacity: 0; transform: scale(1.9); }
+  60% { opacity: 1; transform: scale(0.86); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-punch circle { transform-box: fill-box; transform-origin: center; animation: punch-in 180ms var(--ease-ink) both; }
+
+/* Bench: the live engine on the landing page. */
+input[type="range"].price-range { -webkit-appearance: none; appearance: none; background: transparent; height: 44px; width: 100%; cursor: ew-resize; }
+input[type="range"].price-range:focus { outline: none; }
+input[type="range"].price-range::-webkit-slider-runnable-track { height: 2px; background: var(--ink); }
+input[type="range"].price-range::-moz-range-track { height: 2px; background: var(--ink); }
+input[type="range"].price-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -10px;
+  background: var(--surface); border: 2px solid var(--ink); border-radius: 0; transform: rotate(45deg);
+}
+input[type="range"].price-range::-moz-range-thumb { width: 18px; height: 18px; background: var(--surface); border: 2px solid var(--ink); border-radius: 0; transform: rotate(45deg); }
+input[type="range"].price-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--ink); outline-offset: 4px; }
+input[type="range"].price-range:focus-visible::-moz-range-thumb { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-punch circle { animation: none !important; opacity: 1; }
+}
+/* === end Intaglio === */
+
+/* Sourced textures (docs/DESIGN.md → Assets and licences). */
+body { background-image: url("/textures/paper-grain.webp"); background-size: 384px 384px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body { background-image: none; } }
+:root[data-theme="dark"] body { background-image: none; }
+.grain { background-image: url("/textures/paper-grain.webp"); background-size: 512px 512px; }
+/* ABNC 1863 lathe-work, as an ink-coloured mask. Height sets the scale. */
+.lathe {
+  height: 22px; background-color: currentColor;
+  -webkit-mask: url("/textures/abnc-lathe-1863.png") repeat-x left bottom / auto 100%;
+  mask: url("/textures/abnc-lathe-1863.png") repeat-x left bottom / auto 100%;
+}
+.lathe-flip { transform: scaleY(-1); }
+/* Void pantograph: faint repeating VOID behind an unsigned amount. */
+.void-pantograph {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='30'%3E%3Ctext x='4' y='21' font-family='monospace' font-size='15' font-weight='700' letter-spacing='3' fill='%23888' fill-opacity='0.22' transform='rotate(-8 42 15)'%3EVOID%3C/text%3E%3C/svg%3E");
+}
