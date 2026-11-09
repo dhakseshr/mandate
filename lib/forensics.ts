@@ -182,6 +182,12 @@ Prefer the deterministic checks when they are conclusive. Recommend REFUND_FULL 
   return report;
 }
 
+/** The evidence graph + deterministic checks, Ed25519-signed so PayPal (or anyone) can verify it offline. */
+export function signedEvidencePack(ev: Awaited<ReturnType<typeof buildEvidence>>, note = "", extra: Record<string, unknown> = {}) {
+  const pack = { type: "writ.evidence_pack", issued_at: new Date().toISOString(), purchase: ev.purchase, mandate: ev.root, evidence: ev.nodes, deterministic_checks: ev.findings, note, ...extra };
+  return { pack, sig: signMandate(pack) };
+}
+
 /** Human-approved resolution. Refunds run through the PayPal Agent Toolkit; disputes get a signed evidence pack. */
 export async function resolve(purchaseId: string, action: "REFUND_FULL" | "OPEN_DISPUTE" | "NO_ACTION", note = "") {
   const ev = await buildEvidence(purchaseId);
@@ -191,8 +197,7 @@ export async function resolve(purchaseId: string, action: "REFUND_FULL" | "OPEN_
     return { action, refund: r };
   }
   if (action === "OPEN_DISPUTE") {
-    const pack = { type: "writ.evidence_pack", issued_at: new Date().toISOString(), purchase: ev.purchase, mandate: ev.root, evidence: ev.nodes, deterministic_checks: ev.findings, note };
-    const sig = signMandate(pack);
+    const { pack, sig } = signedEvidencePack(ev, note);
     await logEvent({ mandateId: ev.purchase.mandate_id, type: "HUMAN", tool: "forensics", title: `You approved a dispute — signed evidence pack #${sig.hash.slice(0, 8)} prepared for PayPal`, amount: ev.purchase.amount, detail: { pack_sha256: sig.hash } });
     return { action, evidence_pack: { pack, proof: { sha256: sig.hash, signature: sig.signature, public_key_pem: sig.publicKey } } };
   }

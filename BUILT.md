@@ -156,6 +156,7 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 - Deterministic checks answer three questions: authorized, agent compliance, merchant or provider delivery.
 - The LLM report must cite evidence IDs, and uncited claims are dropped by code.
 - Human-approved resolution: a refund via the Agent Toolkit, or an Ed25519-signed dispute pack.
+- **Real PayPal disputes** (`lib/disputes.ts`, `/api/purchases/[id]/dispute`): syncs a buyer's dispute from the Disputes API (webhook or button), investigates it, and recommends contesting or accepting. After a human decides, Writ submits the signed evidence PDF via `provide-evidence` or accepts the claim via the Agent Toolkit `accept_dispute_claim`. Built and unit-checked (PDF renders, multipart accepted by PayPal); **live test pending a buyer-opened sandbox dispute.**
 
 **Test result** (manipulated provider): provider at fault, high confidence, 0 dropped.
 
@@ -289,7 +290,7 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 - **Product data:** delivery estimates are deterministic per merchant, and ratings are often missing.
 - **Back-translation** is a deterministic cross-check, not a second model.
 - **The red-team suite** runs on demand, not nightly.
-- **Not built:** full AP2 Cart/Payment chain, dispute evidence pack, phone (QR) approvals, earned autonomy, scheduled red-team runs, merchant SDK and badge, A2A/ACP/UCP adapters, `mandate.guard()` SDK, Vault, Payouts, AG Studio fleet console.
+- **Not built:** full AP2 Cart/Payment chain, phone (QR) approvals, earned autonomy, scheduled red-team runs, merchant SDK and badge, A2A/ACP/UCP adapters, `mandate.guard()` SDK, Vault, AG Studio fleet console.
 
 ---
 

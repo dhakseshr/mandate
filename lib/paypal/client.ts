@@ -55,3 +55,28 @@ export async function paypal<T = any>(
   if (!r.ok) throw new PayPalError(r.status, json, path);
   return json as T;
 }
+
+/**
+ * Multipart PayPal call (Disputes API: provide-evidence / accept-claim). The JSON request goes in an
+ * `input` part; evidence documents (PDF/PNG/JPG/GIF only) go in file parts.
+ */
+export async function paypalForm<T = any>(
+  path: string,
+  input: unknown,
+  files: { field: string; name: string; type: string; bytes: Uint8Array }[] = [],
+  idempotencyKey?: string,
+): Promise<T> {
+  const form = new FormData();
+  form.append("input", new Blob([JSON.stringify(input)], { type: "application/json" }), "input.json");
+  for (const f of files) form.append(f.field, new Blob([Buffer.from(f.bytes)], { type: f.type }), f.name);
+  const r = await fetch(PAYPAL_BASE() + path, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await getAccessToken()}`, "PayPal-Request-Id": idempotencyKey ?? randomUUID() },
+    body: form,
+    cache: "no-store",
+  });
+  const text = await r.text();
+  const json = text ? JSON.parse(text) : {};
+  if (!r.ok) throw new PayPalError(r.status, json, path);
+  return json as T;
+}

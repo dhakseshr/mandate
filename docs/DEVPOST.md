@@ -28,7 +28,7 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 6. **The proof.** The **red-team suite** hands a deliberately compromised AI agent a real $100 sub-mandate from the live hold and orders it to steal: prompt-injected overspend, forged prices, quantity stuffing, blocked merchants, skipping approvals, delegating itself more money, escaping its token scope, and spending after revocation. a sub-agent exceeding its own slice while the parent still has money. Writ then runs a **policy-specific Crash Test**, a boundary matrix generated from the mandate's own clauses (budget + $0.01, approval line + $0.01, one item too many, every blocked merchant and subdomain, rating − 0.1, deadline + 1 day, expiry, revocation, and every way a delegation could widen authority). It asks **PayPal's own API** before and after, and issues a signed **Assurance Certificate** bound to that exact mandate hash. Example: *"13/13 attacks blocked · 18/18 boundaries held · $0.00 moved — certificate PASSED"*.
 7. **Merchants** can verify any agent order at `/verify` and get a signed, offline-verifiable receipt.
 8. **Writ Tab: agents pay for data.** Paid APIs answer **HTTP 402** with a signed price. Writ verifies it, the same engine checks the call at every level of the chain, and charges accrue on a tab that **settles as one PayPal capture**. A 5-cent call can't escape the mandate. (The providers are simulated; the PayPal settlement is real.)
-9. **Writ Forensics: an authorized payment isn't the same as a correct one.** Every purchase has an evidence graph. Code answers three questions (*authorized? did the agent follow the instruction? did the merchant or provider deliver?*), and an investigation agent cites evidence for every claim (uncited claims are dropped). It **recommends**: you approve a refund (via the Agent Toolkit) or a signed dispute pack.
+9. **Writ Forensics: an authorized payment isn't the same as a correct one.** Every purchase has an evidence graph. Code answers three questions (*authorized? did the agent follow the instruction? did the merchant or provider deliver?*), and an investigation agent cites evidence for every claim (uncited claims are dropped). It **recommends**: you approve a refund (via the Agent Toolkit) or a signed dispute pack. When a buyer opens a **real PayPal dispute**, Writ pulls it from the Disputes API, investigates it, and (once you decide) either submits the signed evidence through `provide-evidence` or accepts the claim.
 10. **Know Your Merchant, autonomy profiles, photo and voice missions:**
     - Look-alike and impersonating storefronts are denied.
     - Careful / Balanced / Autopilot presets never loosen a limit you wrote.
@@ -95,7 +95,6 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 
 ## What's next for Writ
 - The full **AP2** Cart and Payment mandate chain
-- **Dispute evidence packs** submitted via PayPal's Disputes API
 - **Phone approvals**
 - **Earned autonomy** (limits that widen as an agent proves reliable)
 - Nightly red-team scorecards

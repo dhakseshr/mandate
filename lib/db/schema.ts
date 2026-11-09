@@ -137,3 +137,21 @@ export const searchCache = pgTable("search_cache", {
   results: jsonb("results").$type<Product[]>().notNull(),
   createdAt: createdAt(),
 });
+
+/** PayPal disputes a buyer opened against one of Writ's captures, and Writ's (human-approved) answer. */
+export const disputes = pgTable("disputes", {
+  id: text("id").primaryKey(), // PayPal dispute id, e.g. PP-D-12345
+  purchaseId: text("purchase_id").references(() => purchases.id),
+  mandateId: text("mandate_id").references(() => mandates.id),
+  captureId: text("capture_id").notNull(),
+  reason: text("reason"),
+  status: text("status").notNull(), // PayPal status: OPEN | WAITING_FOR_SELLER_RESPONSE | UNDER_REVIEW | RESOLVED …
+  amount: money("amount"),
+  /** Writ's answer: EVIDENCE_SUBMITTED | CLAIM_ACCEPTED (null until the human decides). */
+  response: text("response"),
+  packSha256: text("pack_sha256"),
+  outcome: text("outcome"),
+  raw: jsonb("raw"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

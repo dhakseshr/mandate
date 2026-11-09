@@ -32,7 +32,11 @@ type Data = {
   nodes: Node[];
   findings: Det[];
   report: Report | null;
+  disputes?: Dispute[];
+  dispute_recommendation?: DisputeAction | null;
 };
+type DisputeAction = "SUBMIT_EVIDENCE" | "ACCEPT_CLAIM";
+type Dispute = { id: string; reason: string | null; status: string; amount: number | null; response: string | null; packSha256: string | null; outcome: string | null; captureId: string; createdAt: string };
 type Resolution = {
   action: Action;
   refund?: { refundId?: string; via?: string };
@@ -86,6 +90,13 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+  // A new PayPal dispute starts an investigation in the background; refresh until its report lands.
+  const waitingReport = !!data?.disputes?.length && !data.report;
+  useEffect(() => {
+    if (!waitingReport) return;
+    const t = window.setInterval(() => void load(), 4000);
+    return () => window.clearInterval(t);
+  }, [waitingReport, load]);
 
   // The report was investigated against the graph *with* the complaint node; recover that graph from the ledger.
   const reportId = data?.report?.id;
@@ -157,6 +168,8 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
   const qs = questions(det);
   const listing = nodes.find((n) => n.kind === "LISTING");
   const tab = purchase.id.startsWith("tab_");
+  const hasDispute = (data.disputes ?? []).length > 0;
+  const disputePanel = <DisputePanel purchase={purchase} disputes={data.disputes ?? []} report={report} recommendation={data.dispute_recommendation ?? null} onDone={load} />;
 
   return (
     <div className="min-w-0">
@@ -248,6 +261,7 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
         {/* REPORT */}
         <aside className="min-w-0 space-y-4 lg:col-span-5">
           {report && <Findings report={report} known={ids} onJump={jump} />}
+          {hasDispute && disputePanel}
 
           <section aria-labelledby="complaint-h" className="border border-line bg-surface">
             <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
@@ -282,7 +296,8 @@ export function ForensicsView({ purchaseId }: { purchaseId: string }) {
             {invErr && <p className="num border-t border-deny/40 bg-deny-soft px-4 py-2 text-[12px] text-deny">✗ {invErr}</p>}
           </section>
 
-          {report && <Recommendation key={report.id} report={report} purchase={purchase} onDone={load} />}
+          {!hasDispute && disputePanel}
+          {report && !(data.disputes ?? []).some((d) => d.status !== "RESOLVED") && <Recommendation key={report.id} report={report} purchase={purchase} onDone={load} />}
         </aside>
       </div>
     </div>
@@ -563,6 +578,153 @@ function Recommendation({ report, purchase, onDone }: { report: Report; purchase
         )}
         {err && <p className="num mt-2 text-[12px] text-deny">✗ {err}</p>}
       </div>
+    </section>
+  );
+}
+
+const REASON: Record<string, string> = {
+  MERCHANDISE_OR_SERVICE_NOT_RECEIVED: "Item or service not received",
+  MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: "Not as described",
+  UNAUTHORISED: "Unauthorized payment",
+  CREDIT_NOT_PROCESSED: "Credit not processed",
+  DUPLICATE_TRANSACTION: "Duplicate transaction",
+  INCORRECT_AMOUNT: "Incorrect amount",
+};
+const words = (s: string | null) => (s ? s.replace(/_/g, " ").toLowerCase() : "—");
+
+/**
+ * A real PayPal dispute on this capture. Writ assembles the evidence and recommends an answer
+ * (contest with the signed pack, or accept the claim); the human decides; the Disputes API carries it out.
+ */
+function DisputePanel({
+  purchase,
+  disputes,
+  report,
+  recommendation,
+  onDone,
+}: {
+  purchase: Data["purchase"];
+  disputes: Dispute[];
+  report: Report | null;
+  recommendation: DisputeAction | null;
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [pack, setPack] = useState<Resolution["evidence_pack"] | null>(null);
+
+  async function call(body: Record<string, unknown>, tag: string) {
+    setBusy(tag);
+    setErr(null);
+    const r = await fetch(`/api/purchases/${purchase.id}/dispute`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) setErr(j.error ?? "PayPal didn't accept that.");
+    else if (j.evidence_pack) setPack(j.evidence_pack);
+    if (body.action === "sync") setChecked(true);
+    setBusy(null);
+    onDone();
+  }
+  function download() {
+    if (!pack) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `writ-evidence-pack-${purchase.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (!purchase.capture_id) return null;
+
+  return (
+    <section aria-labelledby="dispute-h" className="border border-paypal/60 bg-surface">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+        <h2 id="dispute-h" className="label text-[10px] text-paypal">PayPal dispute</h2>
+        <span className="label text-[10px] text-muted">Disputes API</span>
+      </div>
+
+      {disputes.length === 0 ? (
+        <div className="space-y-3 px-4 py-3">
+          <p className="text-[13px] leading-snug text-muted">
+            {checked ? "PayPal reports no dispute" : "No buyer dispute on file"} for capture <span className="num text-paypal">{purchase.capture_id}</span>. If the buyer opens one,
+            Writ assembles this evidence and recommends an answer.
+          </p>
+          <Button variant="ghost" className="min-h-11" disabled={!!busy} onClick={() => call({ action: "sync" }, "sync")}>
+            {busy === "sync" ? "Asking PayPal…" : "Check PayPal for disputes"}
+          </Button>
+        </div>
+      ) : (
+        disputes.map((d) => {
+          const open = d.status !== "RESOLVED" && !d.response;
+          const rec = recommendation;
+          return (
+            <div key={d.id} className="border-b border-line px-4 py-3 last:border-b-0">
+              <dl className="num grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[11px]">
+                <dt className="text-muted">dispute</dt>
+                <dd className="min-w-0"><CopyId value={d.id} label="PayPal dispute ID" /></dd>
+                <dt className="text-muted">reason</dt>
+                <dd className="text-ink">{REASON[d.reason ?? ""] ?? words(d.reason)}</dd>
+                <dt className="text-muted">amount</dt>
+                <dd className="text-ink">{d.amount != null ? usd(d.amount) : "—"}</dd>
+                <dt className="text-muted">PayPal status</dt>
+                <dd className="text-paypal">{words(d.status)}</dd>
+                {d.outcome && (
+                  <>
+                    <dt className="text-muted">outcome</dt>
+                    <dd className="text-ink">{words(d.outcome)}</dd>
+                  </>
+                )}
+              </dl>
+
+              {d.response ? (
+                <div className="mt-3 space-y-2 border-t border-dashed border-line pt-3 text-[12px]">
+                  <p className="num text-ink">
+                    <span className="text-allow">✓</span>{" "}
+                    {d.response === "EVIDENCE_SUBMITTED" ? (
+                      <>
+                        Signed evidence pack <span title={d.packSha256 ?? ""}>#{(d.packSha256 ?? "").slice(0, 12)}</span> submitted to PayPal
+                      </>
+                    ) : (
+                      "Claim accepted — PayPal refunds the buyer"
+                    )}
+                  </p>
+                  {pack && (
+                    <Button variant="ghost" className="min-h-11" onClick={download}>
+                      <Download size={14} aria-hidden /> Download evidence pack
+                    </Button>
+                  )}
+                </div>
+              ) : open ? (
+                <div className="mt-3 border-t border-dashed border-line pt-3">
+                  <p className="display text-[1.15rem] leading-snug text-ink">
+                    {!report ? (
+                      <span className="text-muted">
+                        Investigating the buyer&apos;s claim against the evidence<span className="caret ml-1" aria-hidden />
+                      </span>
+                    ) : rec === "ACCEPT_CLAIM" ? (
+                      <>Writ recommends: accept the claim<span className="text-muted"> — the fault was on our side. Your decision.</span></>
+                    ) : (
+                      <>Writ recommends: contest with signed evidence<span className="text-muted"> — your decision.</span></>
+                    )}
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(["SUBMIT_EVIDENCE", "ACCEPT_CLAIM"] as DisputeAction[]).map((a) => (
+                      <Button key={a} variant={report && a === rec ? "primary" : "ghost"} className="min-h-11 px-3" disabled={!!busy} onClick={() => call({ action: a, dispute_id: d.id }, a)}>
+                        {busy === a ? "Sending to PayPal…" : a === "SUBMIT_EVIDENCE" ? "Submit signed evidence" : `Accept claim${d.amount != null ? ` · ${usd(d.amount)}` : ""}`}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="mt-2.5 text-[11px] leading-snug text-muted">
+                    Evidence goes to PayPal as a PDF of the evidence graph with its Ed25519 signature. Accepting runs through the PayPal Agent Toolkit; PayPal refunds the buyer.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          );
+        })
+      )}
+      {err && <p className="num border-t border-deny/40 bg-deny-soft px-4 py-2 text-[12px] text-deny">✗ {err}</p>}
     </section>
   );
 }

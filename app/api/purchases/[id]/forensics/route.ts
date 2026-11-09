@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildEvidence, investigate, latestReport, resolve } from "@/lib/forensics";
+import { disputesForPurchase, recommendedResponse } from "@/lib/disputes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    return NextResponse.json({ ...(await buildEvidence(id)), report: await latestReport(id) });
+    const report = await latestReport(id);
+    return NextResponse.json({ ...(await buildEvidence(id)), report, disputes: await disputesForPurchase(id), dispute_recommendation: recommendedResponse(report) });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 404 });
   }

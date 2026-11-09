@@ -43,6 +43,13 @@
       "when": 1794144031089,
       "tag": "0005_reflective_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794212013527,
+      "tag": "0006_known_fallen_one",
+      "breakpoints": true
     }
   ]
 }

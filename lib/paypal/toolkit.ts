@@ -17,7 +17,7 @@ function get() {
         shipment: { create: true, get: true },
         payments: { createRefund: true, getRefunds: true },
         transactions: { list: true },
-        disputes: { list: true, get: true },
+        disputes: { list: true, get: true, create: true }, // create = accept_dispute_claim
         insights: { get: true },
       },
       context: { sandbox: env.paypal.sandbox() },
@@ -34,7 +34,8 @@ export type ToolkitTool =
   | "get_refund"
   | "list_transactions"
   | "list_disputes"
-  | "get_dispute";
+  | "get_dispute"
+  | "accept_dispute_claim";
 
 /**
  * Call a toolkit tool and return parsed JSON. The toolkit sometimes returns a JSON string and

@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { paypal } from "@/lib/paypal/client";
 import { logEvent } from "@/lib/ledger";
+import { syncDispute } from "@/lib/disputes";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,7 @@ type WebhookEvent = {
   summary?: string;
   resource: {
     id: string;
+    dispute_id?: string;
     status?: string;
     amount?: { value: string; currency_code: string };
     supplementary_data?: { related_ids?: { order_id?: string; authorization_id?: string; capture_id?: string } };
@@ -82,6 +84,14 @@ export async function POST(req: Request) {
     .onConflictDoNothing()
     .returning({ id: schema.webhookEvents.id });
   if (!inserted.length) return NextResponse.json({ ok: true, duplicate: true });
+
+  // Disputes: the resource is the dispute itself. Pull the full record from the Disputes API, attach it
+  // to the capture it's about, and (for a new dispute) start the Forensics investigation.
+  if (body.event_type.startsWith("CUSTOMER.DISPUTE.")) {
+    const disputeId = body.resource.dispute_id ?? body.resource.id;
+    await syncDispute(disputeId).catch((err) => console.error("[webhook] dispute sync failed", disputeId, err));
+    return NextResponse.json({ ok: true });
+  }
 
   const mandateId = await findMandateId(body);
   if (mandateId) {
