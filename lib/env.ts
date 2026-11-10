@@ -13,7 +13,7 @@ export const env = {
     webhookId: () => process.env.PAYPAL_WEBHOOK_ID,
   },
   ai: {
-    provider: () => (process.env.AI_PROVIDER ?? "goedel") as "goedel" | "google",
+    provider: () => (process.env.AI_PROVIDER?.trim() || "goedel") as "vertex" | "goedel" | "google",
   },
   channel3Key: () => process.env.CHANNEL3_API_KEY,
   databaseUrl: () => process.env.DATABASE_URL ?? "postgres://mandate:mandate@localhost:5433/mandate",

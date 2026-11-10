@@ -16,7 +16,7 @@ Writ turns one sentence of human intent into a **signed, PayPal-enforced spendin
 
 **We don't trust the AI. We trust the enforcement boundary.** And we prove it. Writ hands a deliberately compromised AI agent a real budget and tells it to steal. It then crash-tests every clause at its exact edge, asks PayPal's own API whether anything moved, and issues a signed **Assurance Certificate** for that exact mandate.
 
-- **Live demo:** https://mandate-xvwm.onrender.com, with a guided tour at [`/demo`](https://mandate-xvwm.onrender.com/demo)
+- **Live demo:** https://writ-307007912526.us-central1.run.app, with a guided tour at [`/demo`](https://writ-307007912526.us-central1.run.app/demo). It runs on Google Cloud Run, Cloud SQL and Vertex AI. A mirror runs on Render at https://mandate-xvwm.onrender.com
 - **Video:** _(YouTube link added at submission)_
 - **Built for:** the PayPal AI Hackathon (Devpost), 2026. Sandbox only; no real money moves.
 - **License:** MIT
@@ -47,7 +47,7 @@ Writ turns one sentence of human intent into a **signed, PayPal-enforced spendin
 20. [Run it locally](#run-it-locally)
 21. [Configuration](#configuration)
 22. [Testing](#testing)
-23. [Deploying to Render](#deploying-to-render)
+23. [Deploying (Google Cloud, Render)](#deploying-google-cloud-render)
 24. [Security model](#security-model)
 25. [Honest limitations and roadmap](#honest-limitations-and-roadmap)
 26. [License](#license)
@@ -111,7 +111,7 @@ Signatures alone aren't new: AP2 proposes signed mandates. What Writ adds, worki
 > 2. Every action runs under one signed mandate and **one PayPal hold**.
 > 3. Then run the red-team suite, and open Forensics on the manipulated data provider.
 
-1. Open **https://mandate-xvwm.onrender.com/demo**. On the free hosting tier, the first load after idle can take up to a minute.
+1. Open **https://writ-307007912526.us-central1.run.app/demo**.
 2. Pick a scenario (the flagship, **Procurement** or **Team of agents**), then **Prefill** → **Compile policy**.
 3. On the review screen:
    - Read the § clauses. Click any of them to edit it.
@@ -368,7 +368,7 @@ Before capture, Writ issues a signed **merchant receipt** for the exact order. A
 Choose **"My own AI agent (MCP)"** when authorizing. Mission Control then shows a scoped token.
 
 ```bash
-claude mcp add --transport http writ "https://mandate-xvwm.onrender.com/api/mcp?token=mdt_…"
+claude mcp add --transport http writ "https://writ-307007912526.us-central1.run.app/api/mcp?token=mdt_…"
 ```
 
 The server ([app/api/mcp/route.ts](app/api/mcp/route.ts)) speaks Streamable HTTP as stateless JSON-RPC. Tools exposed:
@@ -422,17 +422,17 @@ The token only works within that one signed mandate. An external agent gets exac
 | App | Next.js 15 (App Router), React 19, TypeScript |
 | Styling | Tailwind CSS v4, custom design tokens |
 | Database | Postgres 16 via Drizzle ORM (SQL migrations in [drizzle/](drizzle/)) |
-| AI | Vercel AI SDK v7 (`generateText`, `Output.object`, tool loops) with `@ai-sdk/openai-compatible` (Gödel Machines, DeepSeek V4.1 Flash). `@ai-sdk/google` is an optional alternative |
+| AI | Vercel AI SDK v7 (`generateText`, `Output.object`, tool loops) with `@ai-sdk/google-vertex`: **Gemini 3 Flash on Google Cloud Vertex AI**, authenticated with the Cloud Run service account (no API key). An OpenAI-compatible provider (Gödel Machines) and the Gemini API are optional alternatives |
 | Payments | PayPal REST (Orders v2, Payments v2, Payouts, Webhooks), JS SDK v6, Agent Toolkit |
 | Product search | Channel3 API (agentic mode) |
 | Crypto | Node `crypto` Ed25519; `@simplewebauthn/server` and `@simplewebauthn/browser` v13 |
 | Audit grid | AG Grid v36 with a custom theme |
-| Hosting | Render Blueprint (web service + Postgres) |
+| Hosting | Google Cloud Run (always-on, one instance) + Cloud SQL Postgres + Secret Manager; a Render Blueprint mirror |
 | Tests | Vitest |
 
 ## Where AI is used, and where it isn't
 
-| AI (DeepSeek V4.1 Flash via Gödel Machines, OpenAI-compatible) | Deterministic code + PayPal |
+| AI (Gemini 3 Flash on Vertex AI) | Deterministic code + PayPal |
 |---|---|
 | Compile plain English → policy (JSON-schema structured output) | Cross-check the policy against your literal words (caps, approval lines, exclusions) |
 | Identify a product from a photo and suggest a mission | Autonomy profiles, which only ever tighten limits |
@@ -459,7 +459,7 @@ Model calls go through a resilient wrapper ([lib/ai/provider.ts](lib/ai/provider
 
 Every PayPal write carries a `PayPal-Request-Id` idempotency key.
 
-**Sponsor tools:** **Channel3** (real product search in agentic mode), **AG Grid** (audit ledger with custom theme), **Render** (Blueprint deploy).
+**Sponsor tools:** **Channel3** (real product search in agentic mode), **AG Grid** (audit ledger with custom theme), **Render** (Blueprint deploy of the mirror). Hosted on **Google Cloud** (Cloud Run, Cloud SQL, Vertex AI).
 
 ---
 
@@ -575,7 +575,9 @@ drizzle/                  SQL migrations
 scripts/                  migrate, PayPal spike, try-* developer scripts
 tests/**                  Vitest suites
 docs/                     Devpost text, video script, validation plan
-render.yaml               Render Blueprint
+Dockerfile                Cloud Run image (migrations run at boot)
+scripts/deploy-gcp.sh     build + deploy to Cloud Run
+render.yaml               Render Blueprint (mirror)
 ```
 
 ## Design system
@@ -601,7 +603,7 @@ Shared primitives are in [components/ui.tsx](components/ui.tsx).
 - Node 22+
 - Docker (for Postgres)
 - A PayPal **sandbox** app linked to a **US** business account, plus a US personal sandbox buyer
-- An OpenAI-compatible LLM key (Gödel Machines), or a Gemini key with `AI_PROVIDER=google`
+- An LLM: a Google Cloud project with Vertex AI (`AI_PROVIDER=vertex`), an OpenAI-compatible key (Gödel Machines), or a Gemini API key (`AI_PROVIDER=google`)
 - A Channel3 API key
 
 ```bash
@@ -626,7 +628,7 @@ npm run dev                 # http://localhost:3000
 | `npm run db:generate` | Generate a migration from schema changes |
 | `npm run spike` | A raw PayPal sandbox run: authorize → 2 partial captures → void → refund |
 
-`scripts/try-compiler.mts`, `try-search.mts` and `try-agent.mts` exercise the compiler, Channel3 search and the agent loop from the command line (run with `npx tsx --env-file=.env scripts/<name>`).
+`scripts/try-compiler.mts`, `try-search.mts`, `try-agent.mts` and `try-vertex.mts` exercise the compiler, Channel3 search and the agent loop from the command line (run with `npx tsx --env-file=.env scripts/<name>`).
 
 > **Sandbox gotcha:** PayPal sandbox accounts default to your own country. India-to-India sandbox payments are declined ("comply with international regulations"). Use a **US** business account for the app and a **US** personal buyer. Use the PayPal wallet flow: card payment sources need card processing enabled on the merchant.
 
@@ -641,13 +643,14 @@ Set in `.env` (see [.env.example](.env.example)). Values are trimmed on read.
 | `PAYPAL_ENV` | No | `sandbox` (default) or `live` |
 | `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | Yes | Same client ID, exposed to the browser for the PayPal button |
 | `PAYPAL_WEBHOOK_ID` | For webhooks | ID of the webhook pointing to `/api/paypal/webhook`, used for signature verification |
-| `AI_PROVIDER` | No | `goedel` (default) or `google` |
+| `AI_PROVIDER` | No | `vertex`, `goedel` (default) or `google` |
+| `GOOGLE_VERTEX_PROJECT`, `GOOGLE_VERTEX_LOCATION`, `VERTEX_MODEL` | With `vertex` | Google Cloud project, location (default `global`) and model (default `gemini-3-flash-preview`). Auth is Application Default Credentials; for local dev you can set `GOOGLE_VERTEX_ACCESS_TOKEN=$(gcloud auth print-access-token)` |
 | `GOEDEL_API_KEY`, `GOEDEL_BASE_URL`, `GOEDEL_MODEL` | With `goedel` | OpenAI-compatible endpoint and model |
 | `GOOGLE_GENERATIVE_AI_API_KEY`, `GOOGLE_MODEL` | With `google` | Gemini key and model |
 | `CHANNEL3_API_KEY` | Yes | Product search (sent as `x-api-key`) |
 | `DATABASE_URL` | No | Defaults to `postgres://mandate:mandate@localhost:5433/mandate` |
 | `MANDATE_SIGNING_KEY` | Recommended in production | Base64 PKCS#8 DER Ed25519 private key. If unset, an ephemeral key is used; existing signatures stay verifiable because each mandate stores its public key, but the signer's identity changes on restart |
-| `APP_ORIGIN` | For custom domains | Extra origin allowed as a passkey relying party (besides `localhost` and `*.onrender.com`) |
+| `APP_ORIGIN` | In production | The app's public URL: allowed as a passkey relying party (besides `localhost` and `*.onrender.com`) and used in evidence-pack links |
 
 ## Testing
 
@@ -666,7 +669,21 @@ npm test
 
 The in-app crash test and red-team suite are the end-to-end checks against a live mandate and PayPal.
 
-## Deploying to Render
+## Deploying (Google Cloud, Render)
+
+### Google Cloud (primary)
+
+The live demo runs on **Cloud Run** with **Cloud SQL** Postgres (unix-socket connection), **Secret Manager** for every secret, and **Vertex AI** Gemini through the service account's credentials.
+
+One-time setup:
+1. Create a project with billing, and enable Cloud Run, Cloud SQL Admin, Vertex AI, Cloud Build, Artifact Registry and Secret Manager.
+2. Create a Cloud SQL Postgres 16 instance `writ-db`, a database `mandate` and a user.
+3. Create a service account `writ-run` with `roles/cloudsql.client`, `roles/aiplatform.user` and `roles/secretmanager.secretAccessor`.
+4. Store these secrets: `DATABASE_URL` (`postgres://USER:PASS@/mandate?host=/cloudsql/PROJECT:REGION:writ-db`), `MANDATE_SIGNING_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `CHANNEL3_API_KEY`, `PAYPAL_WEBHOOK_ID`.
+
+Then deploy with `scripts/deploy-gcp.sh`. It builds the [Dockerfile](Dockerfile), pushes to Artifact Registry and deploys. It runs **one always-on instance** (`--min-instances 1 --max-instances 1 --no-cpu-throttling`), because Writ's per-tree money lock and background agent loops live in-process. Set `APP_ORIGIN` to the service URL.
+
+### Render (mirror)
 
 1. [render.yaml](render.yaml) is a Render Blueprint (web service + Postgres). Create a Blueprint from the repo.
 2. Set the secrets marked `sync: false` in the Render dashboard. Migrations run at boot.

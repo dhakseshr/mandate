@@ -69,7 +69,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </div>
               <div className="min-w-0 space-y-2 md:col-span-8">
                 <p className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-muted">
-                  Built on PayPal Orders v2 · Payments v2 · Payouts · Disputes · Agent Toolkit · JS SDK v6 · Channel3 · AG Grid · Render
+                  Built on PayPal Orders v2 · Payments v2 · Payouts · Disputes · Agent Toolkit · JS SDK v6 · Gemini on Vertex AI · Channel3 · AG Grid · Cloud Run
                 </p>
                 <p className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-muted">
                   An implementation of the Intent Mandate idea from AP2, enforced on real PayPal rails. Sandbox only; no real money moves.

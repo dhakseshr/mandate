@@ -1,7 +1,7 @@
 # Demo video: script and shot list (target 2:50, hard limit < 3:00)
 
 **Rules:**
-- Record on the **live Render site**; wake it first.
+- Record on the **live Google Cloud site** (https://writ-307007912526.us-central1.run.app). It's always on, so there's no cold start.
 - 1080p, burned-in captions, no copyrighted music.
 - Cut every spinner and wait.
 - An AI voiceover is allowed. Speak at a normal pace; never speed up the audio.
@@ -64,7 +64,7 @@
 - **Voiceover:** "One tap revokes any agent. Unspent money goes straight back. Every cent is in an append-only ledger, and merchants can verify any agent's order before they ship."
 
 ### 2:40–2:50 · Close
-- **On screen:** the landing instrument, the URL and repo, and the PayPal / Channel3 / AG Grid / Render line.
+- **On screen:** the landing instrument, the URL and repo, and the PayPal / Gemini on Vertex AI / Channel3 / AG Grid / Cloud Run line.
 - **Voiceover:** "Writ. Signed by a human, bounded by PayPal, provable forever."
 
 ---

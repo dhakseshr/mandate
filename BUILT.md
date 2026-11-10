@@ -4,7 +4,7 @@
 > AI decides what to buy. Writ decides whether it's allowed to spend. PayPal enforces the boundary.
 > *We don't trust the AI. We trust the enforcement boundary.*
 
-- **Live:** https://mandate-xvwm.onrender.com
+- **Live:** https://writ-307007912526.us-central1.run.app (Google Cloud Run + Cloud SQL + Vertex AI Gemini 3 Flash). Mirror: https://mandate-xvwm.onrender.com
 - **Repo:** github.com/dhakseshr/mandate (private until submission)
 - **Status date:** 8 Nov 2026 (updated). **Product renamed to Writ;** a *mandate* is the signed instrument inside it.
 
@@ -220,7 +220,7 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 
 ## 5. AI vs deterministic code
 
-| AI (DeepSeek V4.1 Flash via Gödel, OpenAI-compatible) | Deterministic code + PayPal |
+| AI (Gemini 3 Flash on Vertex AI) | Deterministic code + PayPal |
 |---|---|
 | Compile plain English → policy | Cross-check against your literal words |
 | Orchestrator plans sub-mandates | Attenuation check on every delegation |
@@ -253,7 +253,7 @@ You write a rule in plain English. An LLM compiles it into a strict policy, and 
 - **AI:** Vercel AI SDK v7.
 - **Data:** Postgres + Drizzle, 6 migrations applied at boot.
 - **Integrations:** `@paypal/agent-toolkit`, `@paypal/react-paypal-js`, `@simplewebauthn`, `ag-grid-react`.
-- **Hosting:** Render Blueprint with auto-deploy on push.
+- **Hosting:** Google Cloud Run (always-on, one instance) + Cloud SQL + Secret Manager, deployed with `scripts/deploy-gcp.sh`. Render Blueprint mirror auto-deploys on push.
 
 **API routes:** `mandates` (create, list, view, patch), `order`, `authorize`, `passkey`, `delegate`, `revoke`, `run`, `redteam`, `redteam/suite`, `ap2`, `approvals`, `purchases/refund`, `verify`, `mcp`, `paypal/webhook`, `ledger`, `health`.
 

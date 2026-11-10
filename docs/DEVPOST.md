@@ -48,7 +48,7 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 
 **AI:**
 - Vercel AI SDK v7 tool loops with JSON-schema structured output
-- DeepSeek V4.1 Flash via Gödel Machines (OpenAI-compatible), with resilient retry and failover
+- **Gemini 3 Flash on Google Cloud Vertex AI** (service-account auth, no API key), with resilient retry and failover
 - Used for: the compiler, the orchestrator, the specialist shopping agents and the adversarial red-team agent
 
 **Enforcement and crypto:**
@@ -61,7 +61,8 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 - **Next.js 15**, Tailwind v4, Postgres + Drizzle
 - **Channel3** product search (agentic mode)
 - **AG Grid** ledger with a custom theme
-- **Render** Blueprint deploy
+- **Google Cloud**: Cloud Run (always-on), Cloud SQL Postgres, Secret Manager, Vertex AI
+- **Render** Blueprint deploy (mirror)
 - An **MCP server** (Streamable HTTP), so any agent can connect with a scoped token
 
 **Writ Tab, Forensics, Passport:**
@@ -103,10 +104,10 @@ You write a rule in plain English, for example: *"Onboarding kit for the design 
 - Vault recurring mandates, and Payouts for marketplace settlement
 
 ## Built with
-paypal · paypal-orders-v2 · paypal-payments-v2 · paypal-agent-toolkit · paypal-js-sdk · paypal-webhooks · ap2 · ai · llm · deepseek · vercel-ai-sdk · mcp · next.js · typescript · tailwindcss · postgresql · drizzle · channel3 · ag-grid · render · webauthn · ed25519
+paypal · paypal-orders-v2 · paypal-payments-v2 · paypal-agent-toolkit · paypal-js-sdk · paypal-webhooks · ap2 · ai · llm · gemini · vertex-ai · google-cloud · vercel-ai-sdk · mcp · next.js · typescript · tailwindcss · postgresql · drizzle · channel3 · ag-grid · render · webauthn · ed25519
 
 ## Try it
-- **Live:** https://mandate-xvwm.onrender.com (start at `/demo`)
+- **Live:** https://writ-307007912526.us-central1.run.app (start at `/demo`); mirror: https://mandate-xvwm.onrender.com
 - **Sandbox buyer:** `sb-u4310o53776285@personal.example.com` / _password here_
 - **Repo:** https://github.com/dhakseshr/mandate (MIT)
 
