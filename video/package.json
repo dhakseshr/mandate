@@ -5,7 +5,8 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render Writ out/writ.mp4 --codec h264 --crf 16",
-    "still": "remotion still Writ out/still.png"
+    "still": "remotion still Writ out/still.png",
+    "booth": "node teleprompter/serve.mjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.539",

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Writ VO booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Archivo:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#eeebe1; --surface:#f8f6ef; --ink:#121210; --muted:#55514a; --line:#d6d1c3; --deny:#b3261e; --allow:#1d6a45; --paypal:#0059b8; --esc:#94560a; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:Archivo, system-ui, sans-serif; }
+  .wrap { display:grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap:28px; padding:22px 28px; height:100%; }
+  .label { font-weight:700; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  video { width:100%; border:1.5px solid var(--ink); background:#000; display:block; }
+  .clock { font-family:'IBM Plex Mono', monospace; font-size:28px; margin-top:10px; display:flex; gap:16px; align-items:baseline; }
+  .rec { color:var(--deny); font-weight:600; font-size:16px; letter-spacing:.12em; visibility:hidden; }
+  .rec.on { visibility:visible; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity:.25 } }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  button, select { font: 600 15px Archivo, sans-serif; min-height:44px; padding:0 18px; border:1.5px solid var(--ink); background:var(--surface); color:var(--ink); cursor:pointer; border-radius:2px; }
+  button.primary { background:var(--ink); color:var(--surface); }
+  button.deny { background:var(--deny); border-color:var(--deny); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .meter { height:10px; border:1px solid var(--line); background:var(--surface); margin-top:14px; }
+  .meter > div { height:100%; width:0; background:var(--allow); transition: width .06s linear; }
+  .meter.hot > div { background:var(--deny); }
+  .hint { font-size:13px; color:var(--muted); margin-top:10px; line-height:1.5; }
+  .prompter { display:flex; flex-direction:column; min-height:0; }
+  .now { border:1.5px solid var(--ink); background:var(--surface); padding:30px 34px; min-height:46%; display:flex; flex-direction:column; justify-content:center; box-shadow:0 30px 60px -40px rgba(0,0,0,.45); }
+  .meta { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+  .count { font-family:'IBM Plex Mono', monospace; font-size:15px; color:var(--muted); }
+  .text { font-family:'Bodoni Moda', serif; font-size:46px; line-height:1.22; letter-spacing:-.01em; }
+  .w { color:#b9b3a4; transition: color .08s linear; }
+  .w.done { color:var(--ink); }
+  .w.cur { color:var(--ink); text-decoration: underline; text-decoration-color: var(--deny); text-decoration-thickness: 3px; text-underline-offset: 8px; }
+  .w.stamp { font-weight:500; }
+  .w.stamp.done, .w.stamp.cur { color:var(--deny); }
+  .pause { display:inline-block; width:.55em; color:var(--line); }
+  .bar { height:4px; background:var(--line); margin-top:22px; }
+  .bar > div { height:100%; width:0; background:var(--ink); }
+  .cue { margin-top:10px; font-family:'IBM Plex Mono', monospace; font-size:14px; color:var(--muted); min-height:20px; }
+  .next { margin-top:20px; padding:0 4px; }
+  .next .text { font-size:26px; color:var(--muted); }
+  .list { margin-top:18px; overflow:auto; border-top:1px solid var(--line); flex:1; }
+  .row { display:grid; grid-template-columns: 3ch 9ch 1fr; gap:10px; padding:7px 4px; border-bottom:1px solid var(--line); font-size:14px; cursor:pointer; }
+  .row:hover { background:var(--surface); }
+  .row.on { background:var(--surface); font-weight:600; }
+  .row .t { font-family:'IBM Plex Mono', monospace; color:var(--muted); }
+  .count3 { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(18,18,16,.82); color:var(--surface); font-family:'Bodoni Moda', serif; font-size:220px; z-index:9; }
+  .takes { margin-top:16px; }
+  .take { display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:14px; flex-wrap:wrap; }
+  .take audio { height:36px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section>
+    <div class="label">Writ · voiceover booth · the film plays, you read the highlighted words</div>
+    <video id="v" src="../out/writ-v3.mp4" preload="auto" playsinline></video>
+    <div class="clock"><span id="clock">0:00.0</span><span class="rec" id="rec">● REC</span></div>
+    <div class="controls">
+      <button class="primary" id="recAll">● Record full take</button>
+      <button id="recLine">● Record this line only</button>
+      <button id="stop" class="deny" disabled>■ Stop</button>
+      <button id="rehearse">▶ Rehearse (no recording)</button>
+    </div>
+    <div class="meter" id="meter"><div></div></div>
+    <div class="hint">
+      Wear headphones. Keep the mic about 15 cm from your mouth. The meter should peak around ¾; red means too loud.<br />
+      <b>Space</b> rehearse/pause · <b>R</b> record full take · <b>L</b> record the selected line · <b>Esc</b> stop · click a line on the right to jump to it.<br />
+      Each take downloads as a file named with its exact start time in the film, so I can place it to the frame.
+    </div>
+    <div class="takes" id="takes"></div>
+  </section>
+
+  <section class="prompter">
+    <div class="now">
+      <div class="meta"><span class="label" id="nowLabel">Line 1</span><span class="count" id="nowTime"></span></div>
+      <div class="text" id="nowText"></div>
+      <div class="bar"><div id="bar"></div></div>
+      <div class="cue" id="cue"></div>
+    </div>
+    <div class="next"><div class="label">Next</div><div class="text" id="nextText"></div></div>
+    <div class="list" id="list"></div>
+  </section>
+</div>
+<div class="count3" id="count3">3</div>
+
+<script>
+// Scene timing from video/src/Film.tsx (30 fps). Each line is spoken inside its scene, with a short lead-in.
+// "‖" = a half-second pause. *word* = a stamp word (lands on a verdict on screen).
+const FPS = 30;
+const LINES = [
+  [0, 120, "This listing was written to fool an AI.", "Black · the injected text types on"],
+  [120, 300, "The AI fell for it. ‖ The money *didn't* *move.*", "DENIED punches in"],
+  [300, 405, "This is Writ.", "Title"],
+  [405, 645, "Agents are learning to buy for us. ‖ Today, letting one pay means handing it a card, and hoping. ‖ No finance team will sign that.", "The card gets punched VOID"],
+  [645, 825, "Writ is the financial permission layer for AI agents, built for procurement teams first.", "Landing page"],
+  [825, 1125, "AI decides what to buy. ‖ Writ decides whether it's allowed to spend: thirteen rules, plain code, no model. ‖ And PayPal enforces it.", "ALLOWED → ASK HUMAN → DENIED"],
+  [1125, 1275, "A real mission: a hundred dollars of research data and hardware. Ask me above fifteen.", "Describing the mission"],
+  [1275, 1440, "Gemini on Vertex AI drafts the clauses. Plain code re-checks them against my exact words.", "You are signing this · VOID until signed"],
+  [1440, 1650, "I give it to a team of agents, ‖ and sign with my passkey.", "Team chosen · the passkey seal engraves"],
+  [1650, 2002, "I approve it in PayPal. ‖ That places an authorization hold, ‖ so nothing is charged. ‖ Agents can only capture from it.", "The real PayPal window · Complete Purchase"],
+  [2002, 2212, "An orchestrator gives each specialist a narrower, signed slice. ‖ Every purchase passes thirteen checks at every level.", "Agents at work (sped up)"],
+  [2212, 2377, "Mission done. ‖ The unspent eighty-four dollars is *voided* straight back.", "$84.33 VOID · returned"],
+  [2377, 2617, "Agents pay for data too: per call, on a tab. ‖ One PayPal capture settles it, and Payouts pays the providers.", "Writ Tab"],
+  [2617, 2767, "Bring your own agent over MCP. ‖ Same rules. Same hold.", "Terminal · claude mcp add"],
+  [2767, 2842, "Now, the real test.", "Now, order one to steal."],
+  [2842, 3082, "A compromised agent gets a real, signed slice of this hold, ‖ and orders to steal.", "Run red-team suite"],
+  [3082, 3202, "Poisoned listings. Fake storefronts. Self-delegated budgets.", "The attack runs (sped up)"],
+  [3202, 3442, "Sixteen attacks. ‖ Sixteen blocked. ‖ We don't trust our own database: we ask PayPal, before and after. ‖ *Zero* dollars moved.", "16/16 · $0.00 · 0 BREACHES"],
+  [3442, 3652, "Even an AI told to break the rules improvises, and gets the same answer.", "Every attack, every rule"],
+  [3652, 3832, "Every clause is crash-tested at its edge, ‖ and Writ signs an assurance certificate.", "Certificate PASSED"],
+  [3832, 4162, "One tap revokes every agent. ‖ *Void.* ‖ PayPal releases the whole hold.", "REVOKED · VOID $100 returned"],
+  [4162, 4342, "When something does go wrong, Forensics rebuilds the evidence. ‖ Every claim cites a record. ‖ The data provider is *at* *fault.*", "Provider FAIL · AT FAULT"],
+  [4342, 4582, "I approve the refund. It runs through PayPal's Agent Toolkit.", "Refund $0.20"],
+  [4582, 4762, "Every cent, every verdict, on the record. ‖ PayPal sandbox, real API calls.", "The ledger"],
+  [4762, 5002, "Writ. ‖ Your AI can shop. ‖ It can't *overspend.*", "End card"],
+].map(([a, b, text, cue], i) => ({ i, start: a / FPS, end: b / FPS, text, cue }));
+
+// Word timing: speech starts 0.35 s into the scene and must finish 0.45 s before it ends.
+// Words get time in proportion to their length (plus a beat for punctuation); "‖" is a fixed 0.5 s pause.
+for (const L of LINES) {
+  const toks = L.text.split(/\s+/);
+  const items = toks.map((t) => (t === "‖" ? { pause: true } : { w: t.replace(/\*/g, ""), stamp: /^\*.*\*$/.test(t) }));
+  const t0 = L.start + 0.35, t1 = L.end - 0.45;
+  const pauses = items.filter((x) => x.pause).length * 0.5;
+  const weight = (x) => (x.pause ? 0 : x.w.replace(/[^\w]/g, "").length + 2 + (/[.,:;?!]$/.test(x.w) ? 3 : 0));
+  const total = items.reduce((s, x) => s + weight(x), 0);
+  // Natural pace is about 2.6 words/s; never stretch beyond that, start-align instead.
+  const words = items.filter((x) => !x.pause).length;
+  const natural = Math.min(t1 - t0 - pauses, words / 2.6 + pauses * 0);
+  const per = natural / total;
+  let t = t0;
+  for (const x of items) {
+    x.t = t;
+    t += x.pause ? 0.5 : weight(x) * per;
+    x.e = t;
+  }
+  L.items = items;
+  L.speechEnd = t;
+}
+
+const $ = (id) => document.getElementById(id);
+const v = $("v");
+let selected = 0, recorder = null, chunks = [], recStartFilm = 0, recMode = null, stopAt = null, stream = null, analyser = null;
+
+function fmt(s) { const m = Math.floor(s / 60); return `${m}:${(s - m * 60).toFixed(1).padStart(4, "0")}`; }
+
+function renderList() {
+  $("list").innerHTML = LINES.map((L) => `<div class="row" data-i="${L.i}"><span class="t">${L.i + 1}</span><span class="t">${fmt(L.start)}</span><span>${L.text.replace(/\*/g, "").replace(/‖/g, "·")}</span></div>`).join("");
+  $("list").onclick = (e) => { const r = e.target.closest(".row"); if (!r) return; selected = +r.dataset.i; v.currentTime = Math.max(0, LINES[selected].start - 0.01); paint(); };
+}
+
+function lineAt(t) { let k = 0; for (const L of LINES) if (t >= L.start) k = L.i; return LINES[k]; }
+
+function paint() {
+  const t = v.currentTime;
+  const L = lineAt(t);
+  if (!recorder) selected = L.i;
+  $("clock").textContent = fmt(t);
+  $("nowLabel").textContent = `Line ${L.i + 1} of ${LINES.length}`;
+  $("nowTime").textContent = `${fmt(L.start)} – ${fmt(L.end)}`;
+  $("nowText").innerHTML = L.items.map((x) => {
+    if (x.pause) return `<span class="pause">‖</span>`;
+    const cls = ["w", x.stamp ? "stamp" : "", t >= x.e ? "done" : t >= x.t ? "cur" : ""].join(" ");
+    return `<span class="${cls}">${x.w}</span> `;
+  }).join("");
+  const p = Math.min(1, Math.max(0, (t - L.start) / (L.end - L.start)));
+  $("bar").style.width = `${p * 100}%`;
+  const until = L.items[0].t - t;
+  $("cue").textContent = until > 0 ? `get ready… ${until.toFixed(1)} s · on screen: ${L.cue}` : `on screen: ${L.cue}`;
+  const N = LINES[L.i + 1];
+  $("nextText").textContent = N ? N.text.replace(/\*/g, "").replace(/‖/g, "·") : "— end —";
+  document.querySelectorAll(".row").forEach((r) => r.classList.toggle("on", +r.dataset.i === L.i));
+  if (paint.last !== L.i) { paint.last = L.i; document.querySelector(`.row[data-i="${L.i}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  if (stopAt !== null && t >= stopAt) stop();
+}
+
+function loop() { paint(); requestAnimationFrame(loop); }
+
+async function mic() {
+  if (stream) return stream;
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
+  const ctx = new AudioContext();
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  const buf = new Float32Array(analyser.fftSize);
+  const meter = () => {
+    analyser.getFloatTimeDomainData(buf);
+    let peak = 0; for (const x of buf) peak = Math.max(peak, Math.abs(x));
+    $("meter").firstElementChild.style.width = `${Math.min(100, peak * 110)}%`;
+    $("meter").classList.toggle("hot", peak > 0.92);
+    requestAnimationFrame(meter);
+  };
+  meter();
+  return stream;
+}
+
+async function countdown() {
+  const c = $("count3"); c.style.display = "flex";
+  for (const n of [3, 2, 1]) { c.textContent = n; await new Promise((r) => setTimeout(r, 750)); }
+  c.style.display = "none";
+}
+
+async function record(mode) {
+  if (recorder) return;
+  await mic();
+  const L = LINES[selected];
+  const from = mode === "all" ? 0 : Math.max(0, L.start - 1.5);
+  stopAt = mode === "all" ? null : L.end;
+  v.pause(); v.muted = true; v.currentTime = from;
+  await new Promise((r) => (v.readyState >= 2 ? r() : v.addEventListener("canplay", r, { once: true })));
+  await countdown();
+  chunks = [];
+  const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 192000 } : undefined);
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recMode = mode;
+  await new Promise((r) => { recorder.onstart = r; recorder.start(); });
+  // Film time at the instant the recorder started = where the audio file's 0:00 belongs.
+  recStartFilm = v.currentTime;
+  await v.play();
+  $("rec").classList.add("on"); $("stop").disabled = false; $("recAll").disabled = $("recLine").disabled = true;
+}
+
+function stop() {
+  stopAt = null;
+  v.pause();
+  if (!recorder) return;
+  const r = recorder; recorder = null;
+  r.onstop = () => {
+    const blob = new Blob(chunks, { type: r.mimeType || "audio/webm" });
+    const ms = Math.round(recStartFilm * 1000);
+    const name = recMode === "all" ? `writ-vo-full_at${ms}ms.webm` : `writ-vo-line${String(selected + 1).padStart(2, "0")}_at${ms}ms.webm`;
+    const url = URL.createObjectURL(blob);
+    const row = document.createElement("div");
+    row.className = "take";
+    row.innerHTML = `<b>${name}</b> <audio controls src="${url}"></audio> <a href="${url}" download="${name}">Download again</a> <button>Preview with film</button>`;
+    row.querySelector("button").onclick = () => preview(url, recStartFilm);
+    $("takes").prepend(row);
+    const a = document.createElement("a"); a.href = url; a.download = name; a.click();
+  };
+  r.stop();
+  $("rec").classList.remove("on"); $("stop").disabled = true; $("recAll").disabled = $("recLine").disabled = false;
+}
+
+function preview(url, at) {
+  const a = new Audio(url);
+  v.muted = true; v.currentTime = at;
+  v.play(); a.play();
+  const end = () => { v.pause(); a.pause(); };
+  a.onended = end;
+}
+
+$("recAll").onclick = () => record("all");
+$("recLine").onclick = () => record("line");
+$("stop").onclick = stop;
+$("rehearse").onclick = () => (v.paused ? v.play() : v.pause());
+v.addEventListener("ended", stop);
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.code === "Space") { e.preventDefault(); if (recorder) return; v.paused ? v.play() : v.pause(); }
+  if (e.key === "r" || e.key === "R") record("all");
+  if (e.key === "l" || e.key === "L") record("line");
+  if (e.key === "Escape") stop();
+  if (e.key === "ArrowDown") { selected = Math.min(LINES.length - 1, selected + 1); v.currentTime = LINES[selected].start; }
+  if (e.key === "ArrowUp") { selected = Math.max(0, selected - 1); v.currentTime = LINES[selected].start; }
+});
+renderList(); loop();
+</script>
+</body>
+</html>
