@@ -59,7 +59,9 @@ const isOfficial = (h: string, brand: string) =>
  */
 export function impersonates(merchant: string, brand: string): string | null {
   const h = host(merchant);
-  const b = skeleton(brand.replace(/\.(com|net|co|shop|store|in|uk)$/, ""));
+  // A blocked merchant given as a domain ("bulkbin.example", "deals.co.uk") is compared by its name label.
+  const bh = host(brand);
+  const b = skeleton(bh.includes(".") ? bh.split(".")[0] : bh);
   if (!h || b.length < 3) return null;
   if (isOfficial(h, b)) return null;
   const labels = h.split(".");

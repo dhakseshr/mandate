@@ -23,4 +23,12 @@ describe("know your merchant", () => {
     const r = merchantIdentity("temu-dea1s.shop", ["temu"]);
     expect(r.verdict).toBe("DENY");
   });
+  it("blocks look-alikes of a merchant blocked by domain, whatever its TLD", () => {
+    // Regression: the live crash test found "bu1kbin.example.com" allowed when "bulkbin.example" was blocked.
+    expect(merchantIdentity("bu1kbin.example.com", ["bulkbin.example"]).verdict).toBe("DENY");
+    expect(merchantIdentity("bulkbin-outlet.shop", ["bulkbin.example"]).verdict).toBe("DENY");
+    expect(merchantIdentity("dea1depot.example", ["dealdepot.example"]).verdict).toBe("DENY");
+    expect(merchantIdentity("us.ugreen.com", ["bulkbin.example"]).verdict).toBe("ALLOW");
+    expect(merchantIdentity("jcpenney.com", ["bulkbin.example"]).verdict).toBe("ALLOW");
+  });
 });
