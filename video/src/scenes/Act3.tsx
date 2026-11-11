@@ -51,7 +51,7 @@ export const AttackRunning: React.FC = () => (
   <Shot
     take="redteam"
     from={t(redteam, "start click")}
-    rate={7}
+    rate={(t(redteam, "scorecard") - t(redteam, "start click") - 0.3) / (172 / 30)}
     speedBadge
     fade={0.5}
     cams={[{ at: 0, x: 230, y: 0, w: 2100 }]}
