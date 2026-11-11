@@ -11,11 +11,11 @@ CID="$(grep -E '^NEXT_PUBLIC_PAYPAL_CLIENT_ID=' .env | cut -d= -f2- | sed 's/[[:
 
 docker build -q --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID="${CID}" -t "${IMG}" .
 docker push -q "${IMG}"
-# One instance, always on: Writ's per-tree money lock and background agent loops live in-process.
+# At most one instance (the per-tree money lock and agent loops live in-process), CPU on while it runs, scale to zero when idle.
 gcloud run deploy "${SERVICE}" --project "${PROJECT}" --region "${REGION}" --image "${IMG}" \
   --service-account "writ-run@${PROJECT}.iam.gserviceaccount.com" \
   --add-cloudsql-instances "${PROJECT}:${REGION}:writ-db" --allow-unauthenticated \
-  --min-instances 1 --max-instances 1 --no-cpu-throttling --cpu 1 --memory 1Gi --timeout 3600 \
+  --min-instances 0 --max-instances 1 --no-cpu-throttling --cpu 1 --memory 1Gi --timeout 3600 \
   --update-env-vars "PAYPAL_ENV=sandbox,AI_PROVIDER=vertex,GOOGLE_VERTEX_PROJECT=${PROJECT},GOOGLE_VERTEX_LOCATION=global,VERTEX_MODEL=gemini-3-flash-preview,NEXT_PUBLIC_PAYPAL_CLIENT_ID=${CID}" \
   --update-secrets "DATABASE_URL=DATABASE_URL:latest,MANDATE_SIGNING_KEY=MANDATE_SIGNING_KEY:latest,PAYPAL_CLIENT_ID=PAYPAL_CLIENT_ID:latest,PAYPAL_CLIENT_SECRET=PAYPAL_CLIENT_SECRET:latest,CHANNEL3_API_KEY=CHANNEL3_API_KEY:latest,PAYPAL_WEBHOOK_ID=PAYPAL_WEBHOOK_ID:latest" \
   --quiet
