@@ -1,5 +1,5 @@
 // Natural language mandate -> structured, enforceable Policy.
-import { generateText, Output } from "ai";
+import { generateText, NoObjectGeneratedError, Output } from "ai";
 import { model } from "@/lib/ai/provider";
 import { PolicySchema, type Policy } from "./schema";
 import { crossCheck } from "./crosscheck";
@@ -22,14 +22,25 @@ authorization, so be precise and conservative:
 Never invent restrictions the user did not imply.`;
 
 export async function compileMandate(text: string, today = new Date()): Promise<Policy> {
-  const { output: object } = await generateText({
-    model: model(),
-    output: Output.object({ schema: PolicySchema }),
-    system: SYSTEM,
-    prompt: `TODAY is ${today.toDateString()} (${today.toISOString().slice(0, 10)}).\n\nMandate:\n"""${text}"""`,
-    temperature: 0,
-    maxRetries: 1, // resilient model wrapper handles capacity retries + failover
-  });
+  // Occasionally a model degenerates into runaway JSON that can't be parsed; retry once, nudged off the loop.
+  let object: unknown;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      ({ output: object } = await generateText({
+        model: model(),
+        output: Output.object({ schema: PolicySchema }),
+        system: SYSTEM,
+        prompt: `TODAY is ${today.toDateString()} (${today.toISOString().slice(0, 10)}).\n\nMandate:\n"""${text}"""`,
+        temperature: attempt === 0 ? 0 : 0.3,
+        maxOutputTokens: 2000, // a policy is small; a runaway answer fails fast instead of after minutes
+        maxRetries: 1, // resilient model wrapper handles capacity retries + failover
+      }));
+      break;
+    } catch (err) {
+      if (attempt >= 2 || !NoObjectGeneratedError.isInstance(err)) throw err;
+      console.warn(`[compile] unparseable model output, retrying (${attempt + 1})`);
+    }
+  }
   const compiled = PolicySchema.parse(object);
   if (!compiled.goal.trim()) compiled.goal = text.trim().slice(0, 200);
   // The model interprets; deterministic code double-checks it against your literal words.
