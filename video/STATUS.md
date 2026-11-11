@@ -11,7 +11,13 @@
 | Recorder (Playwright, drives the live site) | `video/recorder/rec.mjs`, `lib.mjs`, `stage.mjs` | Works. `state.json` (gitignored) holds staged mandate ids |
 | Design system | `video/src/components/` (Paper, Rosette, Punch, BrowserFrame + camera, chips) | Done |
 
-## Next steps
+## Progress (Nov 11)
+
+- QA pass done; framing fixed (commits up to 2ee1626).
+- `VOICEOVER.md` (timed script) and `YOUTUBE.md` (title/description/chapters) written.
+- Rendering `out/writ-v1.mp4` (gitignored; re-render with the command below if lost).
+
+## Next steps (original list)
 
 1. **QA pass:** render stills at each scene midpoint (`npx remotion still Writ out/x.png --frame=N --scale=0.25`), then fix framing. Scene midpoints: see `SCENES` in `src/Film.tsx`. Camera boxes are in source pixels (2560×1440).
 2. **Render:** `cd video && npx remotion render Writ out/writ.mp4 --codec h264 --crf 16`. Expect it to take a while.
