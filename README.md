@@ -17,7 +17,7 @@ Writ turns one sentence of human intent into a **signed, PayPal-enforced spendin
 **We don't trust the AI. We trust the enforcement boundary.** And we prove it. Writ hands a deliberately compromised AI agent a real budget and tells it to steal. It then crash-tests every clause at its exact edge, asks PayPal's own API whether anything moved, and issues a signed **Assurance Certificate** for that exact mandate.
 
 - **Live demo:** https://writ-307007912526.us-central1.run.app, with a guided tour at [`/demo`](https://writ-307007912526.us-central1.run.app/demo). It runs on Google Cloud Run, Cloud SQL and Vertex AI. A mirror runs on Render at https://mandate-xvwm.onrender.com
-- **Video:** _(YouTube link added at submission)_
+- **Video (2:54):** https://youtu.be/Xdc7EA-OgZg
 - **Built for:** the PayPal AI Hackathon (Devpost), 2026. Sandbox only; no real money moves.
 - **License:** MIT
 
