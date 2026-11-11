@@ -16,7 +16,7 @@ export const Compose: React.FC = () => (
     take="live"
     from={t(live, "composer") - 0.5}
     slate={{ n: "3", title: "One live mission" }}
-    cams={[{ at: 0, x: 150, y: 40, w: 2250 }, { at: 120, x: 700, y: 60, w: 1700 }]}
+    cams={[{ at: 0, x: 100, y: 20, w: 2350 }, { at: 140, x: 450, y: 60, w: 1950 }]}
     fade={0.7}
     overlay={<Chip start={20} x={120} y={940} size={26}>$100 total · ask me above $15 · never bulkbin.example</Chip>}
   />
@@ -77,7 +77,7 @@ export const Released: React.FC = () => (
   <Shot
     take="live"
     from={t(live, "top") + 0.4}
-    cams={[{ at: 0, x: 280, y: 160, w: 2000 }, { at: 150, x: 330, y: 420, w: 1650 }]}
+    cams={[{ at: 0, x: 280, y: 160, w: 2000 }, { at: 150, x: 330, y: 315, w: 1900 }]}
     overlay={<Chip start={60} x={120} y={940} size={26} tone="paypal">$15.67 captured · $84.33 voided back · webhook-verified</Chip>}
   />
 );

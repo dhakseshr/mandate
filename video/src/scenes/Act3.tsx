@@ -53,7 +53,8 @@ export const AttackRunning: React.FC = () => (
     from={t(redteam, "start click")}
     rate={7}
     speedBadge
-    cams={[{ at: 0, x: 1350, y: 0, w: 1200 }]}
+    fade={0.5}
+    cams={[{ at: 0, x: 230, y: 0, w: 2100 }]}
     overlay={<Chip start={10} x={120} y={930} size={26} tone="deny">A compromised agent · a real $100 slice of this hold · told to steal</Chip>}
   />
 );
@@ -63,7 +64,7 @@ export const Scorecard: React.FC = () => (
   <Shot
     take="redteam"
     from={t(redteam, "scorecard") + 0.6}
-    cams={[{ at: 0, x: 280, y: 60, w: 2000 }, { at: 70, x: 280, y: 120, w: 1250 }, { at: 200, x: 1200, y: 100, w: 1100 }]}
+    cams={[{ at: 0, x: 280, y: 60, w: 2000 }, { at: 150, x: 300, y: 100, w: 1960 }]}
     overlay={<Chip start={110} x={120} y={930} size={28} tone="paypal">$0.00 moved · confirmed by PayPal&apos;s API, before and after</Chip>}
   />
 );
@@ -84,8 +85,9 @@ export const AttackRows: React.FC = () => (
 export const Certificate: React.FC = () => (
   <Shot
     take="redteam"
-    from={t(redteam, "sc scroll 9") + 0.4}
-    cams={[{ at: 0, x: 280, y: 240, w: 2000 }, { at: 120, x: 280, y: 520, w: 1500 }]}
+    from={t(redteam, "sc scroll 7") - 0.3}
+    rate={0.9}
+    cams={[{ at: 0, x: 280, y: 150, w: 2000 }, { at: 180, x: 300, y: 200, w: 1960 }]}
     overlay={<Chip start={60} x={120} y={940} size={26}>Assurance certificate · Ed25519-signed · verifiable offline</Chip>}
   />
 );
@@ -100,8 +102,8 @@ export const KillSwitch: React.FC = () => (
     cams={[
       { at: 0, x: 1150, y: 260, w: 1350 },
       { at: 150, x: 1150, y: 420, w: 1350 },
-      { at: 190, x: 280, y: 330, w: 2000 },
-      { at: 300, x: 280, y: 330, w: 2000 },
+      { at: 190, x: 280, y: 315, w: 2000 },
+      { at: 330, x: 300, y: 315, w: 1960 },
     ]}
     overlay={<Chip start={235} x={120} y={940} size={26} tone="paypal">Payments v2 · void · the rest of the hold released</Chip>}
   />
