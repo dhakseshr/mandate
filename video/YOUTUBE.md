@@ -33,15 +33,15 @@ Everything runs in the PayPal sandbox: real API calls, test money. The paid data
 
 0:00 A listing written to fool an AI
 0:13 The problem
-0:21 Writ: the boundary
-0:37 One live mission: sign it, PayPal holds it
-1:07 Agents at work · money voided back
-1:19 Paying for data · any agent over MCP
-1:32 Now, order one to steal
-1:47 16/16 blocked · $0.00 moved
-2:08 The kill switch
-2:19 Forensics and refunds
-2:33 The ledger
+0:22 Writ: the boundary
+0:38 One live mission: sign it, PayPal holds it
+1:08 Agents at work · money voided back
+1:20 Paying for data · any agent over MCP
+1:35 Now, order one to steal
+1:51 16/16 blocked · $0.00 moved
+2:14 The kill switch
+2:25 Forensics and refunds
+2:39 The ledger
 
 ## Tags
 
