@@ -77,7 +77,7 @@ export const Released: React.FC = () => (
   <Shot
     take="live"
     from={t(live, "top") + 0.4}
-    cams={[{ at: 0, x: 280, y: 160, w: 2000 }, { at: 150, x: 330, y: 315, w: 1900 }]}
+    cams={[{ at: 0, x: 280, y: 160, w: 2000 }, { at: 150, x: 240, y: 315, w: 1950 }]}
     overlay={<Chip start={60} x={120} y={940} size={26} tone="paypal">$15.67 captured · $84.33 voided back · webhook-verified</Chip>}
   />
 );

@@ -102,10 +102,10 @@ export const KillSwitch: React.FC = () => (
     cams={[
       { at: 0, x: 1150, y: 260, w: 1350 },
       { at: 150, x: 1150, y: 420, w: 1350 },
-      { at: 190, x: 280, y: 315, w: 2000 },
-      { at: 330, x: 300, y: 315, w: 1960 },
+      { at: 190, x: 240, y: 315, w: 2040 },
+      { at: 330, x: 250, y: 315, w: 2020 },
     ]}
-    overlay={<Chip start={235} x={120} y={940} size={26} tone="paypal">Payments v2 · void · the rest of the hold released</Chip>}
+    overlay={<Chip start={235} x={120} y={110} size={26} tone="paypal" anchor="right">Payments v2 · void · the whole hold released</Chip>}
   />
 );
 
