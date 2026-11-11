@@ -53,7 +53,8 @@ const PopupWindow: React.FC<{ openAt: number; closeAt: number }> = ({ openAt, cl
   );
 };
 
-export const PAYPAL_FRAMES = at(mark("mission control")) + 30;
+// End on "PayPal is confirming the hold" (the next page shows this mandate's MCP token).
+export const PAYPAL_FRAMES = at(mark("popup closed")) + 50;
 
 export const PayPalHold: React.FC = () => {
   const openAt = at(OPENED) + 2;
@@ -65,7 +66,7 @@ export const PayPalHold: React.FC = () => {
       rate={RATE}
       tilt={0.6}
       speedBadge
-      cams={[{ at: 0, x: 280, y: 200, w: 2000 }, { at: closeAt, x: 280, y: 200, w: 2000 }, { at: closeAt + 40, x: 230, y: 0, w: 2100 }]}
+      cams={[{ at: 0, x: 280, y: 200, w: 2000 }, { at: closeAt + 50, x: 330, y: 260, w: 1850 }]}
       overlay={
         <>
           <PopupWindow openAt={openAt} closeAt={closeAt} />
