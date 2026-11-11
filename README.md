@@ -6,6 +6,14 @@
 >
 > AI decides what to buy. Writ decides whether it's allowed to spend. PayPal enforces the boundary.
 
+<p align="center">
+  <a href="https://youtu.be/Xdc7EA-OgZg" title="Watch the Writ demo film (2:54)">
+    <img src="https://img.youtube.com/vi/Xdc7EA-OgZg/maxresdefault.jpg" alt="Writ demo film: a rogue AI agent, a PayPal hold, and $0.00 moved" width="820" />
+  </a>
+  <br />
+  <b>▶ <a href="https://youtu.be/Xdc7EA-OgZg">Watch the 2:54 demo film</a></b>: a compromised AI agent is ordered to steal, and PayPal confirms $0.00 moved.
+</p>
+
 Writ turns one sentence of human intent into a **signed, PayPal-enforced spending permission** for AI agents. The agents can be Writ's own agent, a team of specialists, or *any* agent connected over MCP. They can search, compare, delegate and pay. But:
 
 - every cent is captured from a **PayPal authorization hold** that the human approved;
