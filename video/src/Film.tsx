@@ -2,7 +2,8 @@ import React from "react";
 import { AbsoluteFill, Series } from "remotion";
 import { ColdOpen, EndCard, Problem, Title, Chapter } from "./scenes/Type";
 import { AttackShot, BenchShot, LandingShot } from "./scenes/Act1";
-import { Agents, Compose, PayPalHold, Released, Review, SignPasskey } from "./scenes/Act2";
+import { Agents, Compose, Released, Review, SignPasskey } from "./scenes/Act2";
+import { PayPalHold, PAYPAL_FRAMES } from "./scenes/PayPal";
 import { AttackRows, AttackRunning, AttackStart, Certificate, ForensicsFault, ForensicsRefund, KillSwitch, LedgerShot, McpCard, Scorecard, TabShot } from "./scenes/Act3";
 
 const Steal = () => <Chapter n="5" title="The attack" line="Now, order one to steal." dark />;
@@ -17,9 +18,9 @@ export const SCENES: [React.FC, number, string][] = [
   [BenchShot, 300, "The boundary · the bench"],
   [Compose, 150, "Describe the mission"],
   [Review, 165, "You are signing this · VOID"],
-  [SignPasskey, 240, "Team · passkey seal"],
-  [PayPalHold, 240, "PayPal authorization hold"],
-  [Agents, 240, "Agents at work"],
+  [SignPasskey, 210, "Team · passkey seal"],
+  [PayPalHold, PAYPAL_FRAMES, "PayPal authorization hold"],
+  [Agents, 210, "Agents at work"],
   [Released, 165, "Captured · voided back"],
   [TabShot, 240, "Writ Tab · Payouts"],
   [McpCard, 150, "Any agent · MCP"],
