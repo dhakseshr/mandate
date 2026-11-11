@@ -1,7 +1,7 @@
 // Automated take recorder: each take drives the live app and records a true 2560×1440 video plus a
 // markers JSON (seconds into the take, element boxes in video pixels) that the film's scenes cut against.
 // Usage: node rec.mjs attack landing tab ledger forensics redteam live
-import { launch, approveHold, BASE, FOOTAGE, state } from "./lib.mjs";
+import { launch, approveHold, api, setState, BUYER, BASE, FOOTAGE, state } from "./lib.mjs";
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 
 mkdirSync(FOOTAGE, { recursive: true });
@@ -25,8 +25,11 @@ async function take(name, fn) {
   const raw = `${FOOTAGE}/.raw-${name}`;
   const { browser, ctx } = await launch({ record: raw });
   await ctx.addInitScript(CURSOR);
-  const page = await ctx.newPage();
+  const allPages = [];
+  const opened = {};
+  ctx.on("page", (p) => { allPages.push(p); opened[allPages.length - 1] = (Date.now() - t0) / 1000; });
   const t0 = Date.now();
+  const page = await ctx.newPage();
   const marks = [];
   const mark = async (label, sel) => {
     let box = null;
@@ -72,10 +75,14 @@ async function take(name, fn) {
     async type(loc, text, delay = 55) { const l = typeof loc === "string" ? page.locator(loc).first() : loc; await h.click(l); await l.pressSequentially(text, { delay }); },
   };
   try { await fn(h); } catch (e) { console.error(`[${name}] ERROR`, e.message.split("\n")[0]); await mark("ERROR " + e.message.split("\n")[0].slice(0, 140)); }
-  const vids = ctx.pages().map((p) => p.video()).filter(Boolean);
   await ctx.close();
   const videos = [];
-  for (const [i, v] of vids.entries()) { const dest = `${FOOTAGE}/${name}${i ? "-popup" + i : ""}.webm`; await v.saveAs(dest).catch(() => {}); videos.push(dest.split("/").pop()); }
+  for (const [i, p] of allPages.entries()) {
+    const v = p.video(); if (!v) continue;
+    const dest = `${FOOTAGE}/${name}${i ? "-popup" + i : ""}.webm`;
+    await v.saveAs(dest).catch(() => {});
+    videos.push({ file: dest.split("/").pop(), openedAt: opened[i] });
+  }
   writeFileSync(`${FOOTAGE}/${name}.json`, JSON.stringify({ name, marks, videos }, null, 1));
   rmSync(raw, { recursive: true, force: true });
   await browser.close();
@@ -83,6 +90,50 @@ async function take(name, fn) {
 
 const S = state();
 const TAKES = {
+  async paypal(h) {
+    const { id } = await api("/api/mandates", { text: "Research the best cloud infrastructure for our AI product. $100 total: buy research data, plus a USB-C hub and a webcam. Ask me before anything over $15. Nothing from bulkbin.example." });
+    await api(`/api/mandates/${id}`, { agentMode: "external" }, "PATCH");
+    setState({ paypal: id });
+    await h.go(`/m/${id}`);
+    await h.page.locator("paypal-button").first().scrollIntoViewIfNeeded();
+    await h.wait(2000);
+    const pb = await h.page.locator("paypal-button").first().boundingBox();
+    await h.page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2, { steps: 30 });
+    await h.mark("paypal button", "paypal-button");
+    await h.wait(800);
+    const popP = h.ctx.waitForEvent("page", { timeout: 45000 });
+    await h.page.locator("paypal-button").first().click();
+    const pop = await popP;
+    await pop.setViewportSize({ width: 900, height: 1080 });
+    await h.mark("popup opened");
+    const email = pop.locator("#email");
+    await email.waitFor({ timeout: 45000 }).catch(() => {});
+    await h.wait(1500);
+    if (await email.isVisible().catch(() => false)) {
+      await email.pressSequentially(BUYER.email, { delay: 45 });
+      await h.mark("email typed");
+      await h.wait(600);
+      await pop.locator("#btnNext").click().catch(() => {});
+    }
+    const pw = pop.locator("#password");
+    await pw.waitFor({ timeout: 45000 });
+    await h.wait(800);
+    await pw.pressSequentially(BUYER.password, { delay: 70 });
+    await h.mark("password typed");
+    await h.wait(600);
+    await pop.locator("#btnLogin").click();
+    const submit = pop.locator('[data-testid="submit-button-initial"]');
+    await submit.waitFor({ timeout: 60000 });
+    await h.mark("review screen");
+    await h.wait(3500);
+    await submit.click();
+    await h.mark("complete purchase");
+    await pop.waitForEvent("close", { timeout: 90000 }).catch(() => {});
+    await h.mark("popup closed");
+    await h.page.waitForSelector("text=/Decision log/i", { timeout: 120000 }).catch(() => {});
+    await h.mark("mission control");
+    await h.wait(4000);
+  },
   async attack(h) {
     await h.go(`/m/${S.attack}`);
     await h.scrollTo("[id^=atk-]", 10, "start");
