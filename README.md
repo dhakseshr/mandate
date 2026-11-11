@@ -574,7 +574,8 @@ components/**             "Intaglio" UI (docs/DESIGN.md)
 drizzle/                  SQL migrations
 scripts/                  migrate, PayPal spike, try-* developer scripts
 tests/**                  Vitest suites
-docs/                     Devpost text, video script, validation plan
+docs/DESIGN.md            the Intaglio design system: references, principles, asset licences
+video/                    the demo film: live-app recorder, Remotion edit, narration (see video/README.md)
 Dockerfile                Cloud Run image (migrations run at boot)
 scripts/deploy-gcp.sh     build + deploy to Cloud Run
 render.yaml               Render Blueprint (mirror)
